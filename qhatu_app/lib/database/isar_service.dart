@@ -123,4 +123,11 @@ class IsarService {
       await isar.pendingScores.clear();
     });
   }
+
+  Future<void> deletePendingScore(String uniqueKey) async {
+    final isar = await db;
+    await isar.writeTxn(() async {
+      await isar.pendingScores.filter().uniqueKeyEqualTo(uniqueKey).deleteAll();
+    });
+  }
 }

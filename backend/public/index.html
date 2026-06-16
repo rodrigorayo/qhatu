@@ -1,0 +1,1593 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Qhatu Ferias - Panel de Control</title>
+  <!-- Google Fonts: Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Lucide Icons (CDN) -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    :root {
+      --primary: #7c4dff;
+      --primary-hover: #651fff;
+      --primary-light: #ede7f6;
+      --background: #f8f9fa;
+      --surface: #ffffff;
+      --text: #2c3e50;
+      --text-muted: #7f8c8d;
+      --border: #e2e8f0;
+      --success: #00c853;
+      --danger: #ff1744;
+      --warning: #ff9100;
+      --radius: 16px;
+      --shadow: 0 10px 30px rgba(0,0,0,0.05);
+      --shadow-sm: 0 4px 12px rgba(0,0,0,0.03);
+      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    [data-theme="dark"] {
+      --background: #0f172a;
+      --surface: #1e293b;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --border: #334155;
+      --primary-light: #2e1065;
+      --shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Outfit', sans-serif;
+    }
+
+    body {
+      background-color: var(--background);
+      color: var(--text);
+      transition: var(--transition);
+      min-height: 100vh;
+      display: flex;
+    }
+
+    /* Login Screen */
+    #login-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 100vw;
+      height: 100vh;
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 1000;
+      background-color: var(--background);
+    }
+
+    .login-card {
+      background: var(--surface);
+      padding: 40px;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      width: 100%;
+      max-width: 420px;
+      text-align: center;
+      border: 1px solid var(--border);
+      animation: fadeInUp 0.6s ease;
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .login-card h2 {
+      margin-bottom: 8px;
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    .login-card p {
+      color: var(--text-muted);
+      margin-bottom: 32px;
+      font-size: 14px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+      text-align: left;
+      position: relative;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+      font-size: 14px;
+    }
+
+    .input-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .input-wrapper i {
+      position: absolute;
+      left: 16px;
+      color: var(--text-muted);
+    }
+
+    .input-wrapper input, select, textarea {
+      width: 100%;
+      padding: 14px 16px 14px 44px;
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      background: var(--surface);
+      color: var(--text);
+      outline: none;
+      font-size: 15px;
+      transition: var(--transition);
+    }
+
+    .input-wrapper input:focus, select:focus, textarea:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px var(--primary-light);
+    }
+
+    .input-wrapper .eye-toggle {
+      position: absolute;
+      right: 16px;
+      left: auto;
+      cursor: pointer;
+      color: var(--text-muted);
+      background: none;
+      border: none;
+      outline: none;
+      display: flex;
+      align-items: center;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 12px;
+      background: var(--primary);
+      color: white;
+      font-weight: 600;
+      font-size: 16px;
+      cursor: pointer;
+      transition: var(--transition);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn:hover {
+      background: var(--primary-hover);
+      transform: translateY(-2px);
+    }
+
+    .btn:active {
+      transform: translateY(0);
+    }
+
+    /* Main Dashboard Layout */
+    #dashboard-container {
+      display: none;
+      width: 100%;
+      min-height: 100vh;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 280px;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      padding: 32px 24px;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 100;
+    }
+
+    .sidebar-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 40px;
+    }
+
+    .logo-box {
+      background: var(--primary);
+      color: white;
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-weight: 800;
+      font-size: 20px;
+    }
+
+    .logo-text h1 {
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    .logo-text span {
+      font-size: 12px;
+      color: var(--text-muted);
+      display: block;
+    }
+
+    .nav-menu {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      flex: 1;
+    }
+
+    .nav-item a {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 14px 16px;
+      border-radius: 12px;
+      color: var(--text-muted);
+      text-decoration: none;
+      font-weight: 500;
+      transition: var(--transition);
+      cursor: pointer;
+    }
+
+    .nav-item.active a, .nav-item a:hover {
+      color: var(--primary);
+      background: var(--primary-light);
+    }
+
+    .sidebar-footer {
+      border-top: 1px solid var(--border);
+      padding-top: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .user-avatar {
+      background: var(--primary-light);
+      color: var(--primary);
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-weight: 600;
+    }
+
+    .user-meta h4 {
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .user-meta span {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    /* Main Content Area */
+    .main-content {
+      margin-left: 280px;
+      flex: 1;
+      padding: 40px;
+      max-width: 1200px;
+      width: calc(100% - 280px);
+    }
+
+    header.content-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 32px;
+    }
+
+    .tab-pane {
+      display: none;
+      animation: fadeIn 0.4s ease;
+    }
+
+    .tab-pane.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    /* Dashboard Cards Grid */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 24px;
+      margin-bottom: 32px;
+    }
+
+    .card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      padding: 24px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .card h3 {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* Table styles */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 16px;
+      text-align: left;
+    }
+
+    th {
+      padding: 14px 16px;
+      border-bottom: 2px solid var(--border);
+      font-weight: 600;
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+
+    td {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+      font-size: 15px;
+    }
+
+    tr:hover td {
+      background-color: var(--background);
+    }
+
+    /* Badges */
+    .badge {
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .badge-primary { background: var(--primary-light); color: var(--primary); }
+    .badge-success { background: #e8f5e9; color: var(--success); }
+    .badge-warning { background: #fff3e0; color: var(--warning); }
+    .badge-danger { background: #ffebee; color: var(--danger); }
+
+    /* Forms */
+    .inline-form {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) auto;
+      gap: 16px;
+      align-items: end;
+      margin-bottom: 24px;
+    }
+
+    .inline-form .form-group {
+      margin-bottom: 0;
+    }
+
+    .inline-form .input-wrapper input, .inline-form select {
+      padding: 12px 14px;
+    }
+
+    /* Sheets Import Section */
+    .sheets-import-box {
+      border: 2px dashed var(--primary);
+      background: var(--primary-light);
+      padding: 24px;
+      border-radius: var(--radius);
+      margin-bottom: 32px;
+    }
+
+    /* Theme toggle */
+    .theme-toggle {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: 1px solid var(--border);
+      transition: var(--transition);
+    }
+
+    .theme-toggle:hover {
+      background: var(--primary-light);
+      color: var(--primary);
+    }
+
+    /* Actions List */
+    .action-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text-muted);
+      padding: 6px;
+      border-radius: 8px;
+      transition: var(--transition);
+    }
+
+    .action-btn:hover {
+      color: var(--danger);
+      background: #ffebee;
+    }
+
+    /* Accordion */
+    .accordion-header {
+      padding: 16px;
+      background: var(--background);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: 600;
+    }
+
+    .accordion-content {
+      padding: 16px;
+      border: 1px solid var(--border);
+      border-top: none;
+      border-radius: 0 0 12px 12px;
+      margin-top: -12px;
+      margin-bottom: 12px;
+      display: none;
+    }
+
+    /* Loader overlay */
+    .overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      z-index: 2000;
+      display: none;
+      justify-content: center;
+      align-items: center;
+      backdrop-filter: blur(4px);
+    }
+
+    .spinner {
+      width: 50px;
+      height: 50px;
+      border: 5px solid rgba(255,255,255,0.3);
+      border-radius: 50%;
+      border-top-color: white;
+      animation: spin 1s ease-in-out infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+  </style>
+</head>
+<body>
+
+  <!-- Spinner Overlay -->
+  <div class="overlay" id="loader-overlay">
+    <div class="spinner"></div>
+  </div>
+
+  <!-- SECCIÓN DE LOGIN -->
+  <div id="login-container">
+    <div class="login-card">
+      <div class="logo-box" style="margin: 0 auto 16px auto;">Q</div>
+      <h2>Qhatu Ferias</h2>
+      <p>Inicia sesión como administrador de la feria</p>
+      <form id="login-form">
+        <div class="form-group">
+          <label for="username">Usuario</label>
+          <div class="input-wrapper">
+            <i data-lucide="user"></i>
+            <input type="text" id="username" placeholder="Tu usuario" required autocomplete="username">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="password">Contraseña</label>
+          <div class="input-wrapper">
+            <i data-lucide="lock"></i>
+            <input type="password" id="password" placeholder="Tu contraseña" required autocomplete="current-password">
+            <button type="button" class="eye-toggle" onclick="toggleLoginPassword()">
+              <i data-lucide="eye" id="eye-icon"></i>
+            </button>
+          </div>
+        </div>
+        <button type="submit" class="btn" style="margin-top: 8px;">
+          Ingresar <i data-lucide="arrow-right"></i>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- SECCIÓN DEL DASHBOARD -->
+  <div id="dashboard-container">
+    <!-- Sidebar Lateral -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="logo-box">Q</div>
+        <div class="logo-text">
+          <h1 id="feria-name-sidebar">Feria Local</h1>
+          <span>Administración</span>
+        </div>
+      </div>
+
+      <ul class="nav-menu">
+        <li class="nav-item active" id="menu-rubrics"><a onclick="switchTab('rubrics')"><i data-lucide="award"></i> Rúbricas y Áreas</a></li>
+        <li class="nav-item" id="menu-stands"><a onclick="switchTab('stands')"><i data-lucide="store"></i> Stands y Proyectos</a></li>
+        <li class="nav-item" id="menu-evaluators"><a onclick="switchTab('evaluators')"><i data-lucide="users"></i> Jurados y Asignación</a></li>
+        <li class="nav-item" id="menu-results"><a onclick="switchTab('results')"><i data-lucide="bar-chart-3"></i> Resultados Feria</a></li>
+      </ul>
+
+      <div class="sidebar-footer">
+        <div class="user-info">
+          <div class="user-avatar" id="user-avatar-chars">AD</div>
+          <div class="user-meta">
+            <h4 id="user-display-name">Administrador</h4>
+            <span>Feria Admin</span>
+          </div>
+          <button class="theme-toggle" onclick="toggleTheme()" style="margin-left: auto;">
+            <i data-lucide="sun" id="theme-icon"></i>
+          </button>
+        </div>
+        <button class="btn" onclick="logout()" style="background: var(--surface); color: var(--text); border: 1px solid var(--border);">
+          <i data-lucide="log-out"></i> Cerrar Sesión
+        </button>
+      </div>
+    </aside>
+
+    <!-- Área de Contenido Principal -->
+    <main class="main-content">
+      <header class="content-header">
+        <div>
+          <h2 id="current-tab-title">Configuración de Rúbricas</h2>
+          <p style="color: var(--text-muted); font-size: 14px;">Gestiona las áreas de evaluación y los criterios correspondientes.</p>
+        </div>
+      </header>
+
+      <!-- TAB 1: RÚBRICAS (ÁREAS Y CRITERIOS) -->
+      <section class="tab-pane active" id="tab-rubrics">
+        <div class="grid">
+          <!-- Crear Área -->
+          <div class="card">
+            <h3><i data-lucide="folder-plus"></i> Crear Nueva Área</h3>
+            <form id="create-area-form">
+              <div class="form-group">
+                <label>Nombre del Área</label>
+                <div class="input-wrapper">
+                  <i data-lucide="tag"></i>
+                  <input type="text" id="new-area-name" placeholder="Ej: Innovación, SER, SABER" required>
+                </div>
+              </div>
+              <button type="submit" class="btn">Crear Área</button>
+            </form>
+          </div>
+
+          <!-- Crear Criterio -->
+          <div class="card">
+            <h3><i data-lucide="file-plus"></i> Crear Criterio</h3>
+            <form id="create-criterion-form">
+              <div class="form-group">
+                <label>Área Perteneciente</label>
+                <div class="input-wrapper">
+                  <i data-lucide="folder" style="z-index:10;"></i>
+                  <select id="crit-area-select" style="padding-left:44px;" required>
+                    <option value="">Selecciona un área...</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Nombre del Criterio</label>
+                <div class="input-wrapper">
+                  <i data-lucide="help-circle"></i>
+                  <input type="text" id="new-crit-name" placeholder="Ej: Creatividad, Originalidad" required>
+                </div>
+              </div>
+              <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 0;">
+                <div class="form-group">
+                  <label>Nota Mínima</label>
+                  <div class="input-wrapper">
+                    <i data-lucide="minus"></i>
+                    <input type="number" id="new-crit-min" value="0" required>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label>Nota Máxima</label>
+                  <div class="input-wrapper">
+                    <i data-lucide="plus"></i>
+                    <input type="number" id="new-crit-max" value="100" required>
+                  </div>
+                </div>
+              </div>
+              <button type="submit" class="btn" style="margin-top: 16px;">Crear Criterio</button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Rúbrica de la Feria -->
+        <div class="card">
+          <h3><i data-lucide="layout"></i> Rúbrica Actual de la Feria</h3>
+          <div id="rubric-accordion-container" style="margin-top: 16px;">
+            <!-- Se carga dinámicamente -->
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 2: STANDS Y MIEMBROS -->
+      <section class="tab-pane" id="tab-stands">
+        <!-- Carga Masiva Google Sheets -->
+        <div class="sheets-import-box">
+          <h3 style="margin-bottom: 8px;"><i data-lucide="file-spreadsheet" style="color: var(--primary);"></i> Carga Masiva desde Google Sheets</h3>
+          <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 20px;">
+            Introduce el enlace del Google Sheet para configurar tus stands y rúbrica al instante.
+            El documento debe ser público <strong>(Cualquiera con el enlace puede ver)</strong> y tener dos pestañas: 
+            <span class="badge badge-primary">Stands</span> y <span class="badge badge-primary">Criterios</span>.
+          </p>
+          <form id="import-sheets-form">
+            <div class="form-group">
+              <label>Enlace Público del Google Sheet</label>
+              <div class="input-wrapper">
+                <i data-lucide="link"></i>
+                <input type="url" id="sheets-url" placeholder="https://docs.google.com/spreadsheets/d/.../edit" required>
+              </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 20px;">
+              <input type="checkbox" id="overwrite-sheets" style="width: 18px; height: 18px; cursor: pointer;">
+              <label for="overwrite-sheets" style="cursor: pointer; font-size: 14px;">Sobrescribir datos existentes en la feria (Elimina stands y rúbrica actual)</label>
+            </div>
+            <button type="submit" class="btn" style="max-width: 280px;"><i data-lucide="upload-cloud"></i> Importar Datos</button>
+          </form>
+        </div>
+
+        <div class="grid">
+          <!-- Crear Stand -->
+          <div class="card">
+            <h3><i data-lucide="plus-square"></i> Crear Stand</h3>
+            <form id="create-stand-form">
+              <div class="grid" style="grid-template-columns: 1fr 2fr; gap: 12px; margin-bottom: 0;">
+                <div class="form-group">
+                  <label>Número</label>
+                  <div class="input-wrapper">
+                    <i data-lucide="hash"></i>
+                    <input type="text" id="stand-number" placeholder="A-1" required>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label>Nombre del Proyecto</label>
+                  <div class="input-wrapper">
+                    <i data-lucide="presentation"></i>
+                    <input type="text" id="stand-name" placeholder="Eco-Plástico" required>
+                  </div>
+                </div>
+              </div>
+              <div class="form-group" style="margin-top: 16px;">
+                <label>Curso / Grado (Opcional)</label>
+                <div class="input-wrapper">
+                  <i data-lucide="graduation-cap"></i>
+                  <input type="text" id="stand-course" placeholder="Ej: 3ro de Secundaria">
+                </div>
+              </div>
+              <button type="submit" class="btn" style="margin-top: 16px;">Registrar Stand</button>
+            </form>
+          </div>
+
+          <!-- Agregar Integrante -->
+          <div class="card">
+            <h3><i data-lucide="user-plus"></i> Registrar Integrante</h3>
+            <form id="create-member-form">
+              <div class="form-group">
+                <label>Stand</label>
+                <div class="input-wrapper">
+                  <i data-lucide="store" style="z-index:10;"></i>
+                  <select id="member-stand-select" style="padding-left: 44px;" required>
+                    <option value="">Selecciona un stand...</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Nombre Completo</label>
+                <div class="input-wrapper">
+                  <i data-lucide="user"></i>
+                  <input type="text" id="member-name" placeholder="Ej: Juan Pérez Gómez" required>
+                </div>
+              </div>
+              <button type="submit" class="btn">Registrar Integrante</button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Lista de Stands -->
+        <div class="card">
+          <h3><i data-lucide="list"></i> Listado de Stands y Miembros</h3>
+          <div style="overflow-x: auto;">
+            <table>
+              <thead>
+                <tr>
+                  <th>N°</th>
+                  <th>Proyecto</th>
+                  <th>Curso</th>
+                  <th>Integrantes</th>
+                  <th style="width: 80px; text-align: center;">Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="stands-table-body">
+                <!-- Carga dinámica -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 3: JURADOS Y ASIGNACIONES -->
+      <section class="tab-pane" id="tab-evaluators">
+        <div class="grid" style="grid-template-columns: 1fr 2fr;">
+          <!-- Asignar Evaluador -->
+          <div class="card">
+            <h3><i data-lucide="user-check"></i> Asignar Evaluador</h3>
+            <form id="assign-eval-form">
+              <div class="form-group">
+                <label>Usuario del Evaluador</label>
+                <div class="input-wrapper">
+                  <i data-lucide="user"></i>
+                  <input type="text" id="eval-username" placeholder="jurado1" required>
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Contraseña</label>
+                <div class="input-wrapper">
+                  <i data-lucide="lock"></i>
+                  <input type="password" id="eval-password" placeholder="pass123" required>
+                  <button type="button" class="eye-toggle" onclick="toggleEvalPassword()">
+                    <i data-lucide="eye" id="eval-eye-icon"></i>
+                  </button>
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Rol en el Stand</label>
+                <div class="input-wrapper">
+                  <i data-lucide="shield" style="z-index: 10;"></i>
+                  <select id="eval-role-select" style="padding-left: 44px;" required>
+                    <option value="JURADO">Jurado (Califica Stand)</option>
+                    <option value="DELEGADO">Delegado (Califica Miembros)</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Stand Objetivo</label>
+                <div class="input-wrapper">
+                  <i data-lucide="store" style="z-index: 10;"></i>
+                  <select id="eval-stand-select" style="padding-left: 44px;" required>
+                    <option value="">Selecciona un stand...</option>
+                  </select>
+                </div>
+              </div>
+              
+              <!-- Checklist de Áreas -->
+              <div class="form-group">
+                <label style="font-weight: 600;">Áreas a Evaluar (vacío = todas)</label>
+                <div id="eval-areas-checklist" style="max-height: 150px; overflow-y: auto; border: 1.5px solid var(--border); padding: 8px 12px; border-radius: 12px; margin-top: 8px;">
+                  <!-- Dinámico -->
+                </div>
+              </div>
+
+              <button type="submit" class="btn">Crear y Asignar</button>
+            </form>
+          </div>
+
+          <!-- Listado de Asignaciones -->
+          <div class="card">
+            <h3><i data-lucide="users-2"></i> Listado de Evaluadores Asignados</h3>
+            <div style="overflow-x: auto;">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Usuario</th>
+                    <th>Stand</th>
+                    <th>Rol</th>
+                    <th>Áreas Específicas</th>
+                    <th style="width: 80px; text-align: center;">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody id="evaluators-table-body">
+                  <!-- Carga dinámica -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 4: RESULTADOS -->
+      <section class="tab-pane" id="tab-results">
+        <div style="display: flex; gap: 16px; margin-bottom: 24px; justify-content: flex-end;">
+          <button class="btn" style="max-width: 240px; background: var(--success);" onclick="exportCSV()"><i data-lucide="download"></i> Exportar a Excel (CSV)</button>
+          <button class="btn" style="max-width: 140px;" onclick="loadResults()"><i data-lucide="refresh-cw"></i> Actualizar</button>
+        </div>
+
+        <div class="card">
+          <h3><i data-lucide="trophy"></i> Resultados del Avance General</h3>
+          <div style="overflow-x: auto;">
+            <table>
+              <thead>
+                <tr>
+                  <th>Stand N°</th>
+                  <th>Nombre Stand</th>
+                  <th>Curso</th>
+                  <th>Jurados (Promedio)</th>
+                  <th>Delegados (Promedio)</th>
+                  <th>Progreso</th>
+                </tr>
+              </thead>
+              <tbody id="results-table-body">
+                <!-- Carga dinámica -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    let token = localStorage.getItem('token') || '';
+    let apiHost = window.location.origin;
+
+    // Inicialización al cargar la página
+    document.addEventListener('DOMContentLoaded', () => {
+      // Verificar si hay token activo
+      if (token) {
+        showDashboard();
+      } else {
+        showLogin();
+      }
+      lucide.createIcons();
+    });
+
+    // Cambiar visibilidad de contraseña en Login
+    function toggleLoginPassword() {
+      const input = document.getElementById('password');
+      const icon = document.getElementById('eye-icon');
+      if (input.type === 'password') {
+        input.type = 'text';
+        icon.setAttribute('data-lucide', 'eye-off');
+      } else {
+        input.type = 'password';
+        icon.setAttribute('data-lucide', 'eye');
+      }
+      lucide.createIcons();
+    }
+
+    // Cambiar visibilidad de contraseña en evaluadores
+    function toggleEvalPassword() {
+      const input = document.getElementById('eval-password');
+      const icon = document.getElementById('eval-eye-icon');
+      if (input.type === 'password') {
+        input.type = 'text';
+        icon.setAttribute('data-lucide', 'eye-off');
+      } else {
+        input.type = 'password';
+        icon.setAttribute('data-lucide', 'eye');
+      }
+      lucide.createIcons();
+    }
+
+    // Alternar tema (Dark/Light)
+    function toggleTheme() {
+      const current = document.body.getAttribute('data-theme');
+      const icon = document.getElementById('theme-icon');
+      if (current === 'dark') {
+        document.body.removeAttribute('data-theme');
+        icon.setAttribute('data-lucide', 'sun');
+      } else {
+        document.body.setAttribute('data-theme', 'dark');
+        icon.setAttribute('data-lucide', 'moon');
+      }
+      lucide.createIcons();
+    }
+
+    // Mostrar login
+    function showLogin() {
+      document.getElementById('login-container').style.display = 'flex';
+      document.getElementById('dashboard-container').style.display = 'none';
+    }
+
+    // Mostrar Dashboard
+    function showDashboard() {
+      document.getElementById('login-container').style.display = 'none';
+      document.getElementById('dashboard-container').style.display = 'flex';
+      
+      // Cargar info del usuario
+      const username = localStorage.getItem('username') || 'Feria Admin';
+      document.getElementById('user-display-name').innerText = username;
+      document.getElementById('user-avatar-chars').innerText = username.substring(0, 2).toUpperCase();
+      document.getElementById('feria-name-sidebar').innerText = localStorage.getItem('feriaName') || 'Feria';
+
+      // Cargar pestaña inicial
+      switchTab('rubrics');
+    }
+
+    // Cerrar sesión
+    function logout() {
+      localStorage.clear();
+      token = '';
+      showLogin();
+    }
+
+    // Alternar pestañas
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-pane').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+
+      document.getElementById(`tab-${tabId}`).classList.add('active');
+      document.getElementById(`menu-${tabId}`).classList.add('active');
+
+      // Actualizar título de cabecera
+      const titles = {
+        'rubrics': 'Configuración de Rúbricas',
+        'stands': 'Stands y Proyectos',
+        'evaluators': 'Jurados y Asignación',
+        'results': 'Resultados de Evaluación'
+      };
+      const subs = {
+        'rubrics': 'Gestiona las áreas de evaluación y los criterios correspondientes.',
+        'stands': 'Configura y visualiza stands escolares, además de carga de Sheets.',
+        'evaluators': 'Registra jurados y delega accesos específicos.',
+        'results': 'Monitorea el avance de la feria y descarga reportes en CSV.'
+      };
+      document.querySelector('.content-header h2').innerText = titles[tabId];
+      document.querySelector('.content-header p').innerText = subs[tabId];
+
+      // Cargar datos según pestaña
+      if (tabId === 'rubrics') loadRubric();
+      if (tabId === 'stands') loadStandsAndProjects();
+      if (tabId === 'evaluators') loadEvaluatorsTab();
+      if (tabId === 'results') loadResults();
+    }
+
+    // Helper para spinner
+    function setLoader(state) {
+      document.getElementById('loader-overlay').style.display = state ? 'flex' : 'none';
+    }
+
+    // API Helper
+    async function apiRequest(path, method = 'GET', body = null) {
+      const headers = {
+        'Content-Type': 'application/json',
+      };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const config = { method, headers };
+      if (body) {
+        config.body = JSON.stringify(body);
+      }
+
+      const res = await fetch(`${apiHost}${path}`, config);
+      if (res.status === 401 || res.status === 403) {
+        logout();
+        throw new Error('Sesión expirada');
+      }
+      return res;
+    }
+
+    // --- FORMULARIO DE LOGIN ---
+    document.getElementById('login-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      setLoader(true);
+      const usernameVal = document.getElementById('username').value.trim();
+      const passwordVal = document.getElementById('password').value.trim();
+
+      try {
+        const res = await fetch(`${apiHost}/api/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: usernameVal, password: passwordVal })
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          if (data.role !== 'FERIA_ADMIN') {
+            alert('Solo el rol de Administrador de Feria puede usar este panel.');
+            setLoader(false);
+            return;
+          }
+          token = data.token;
+          localStorage.setItem('token', token);
+          localStorage.setItem('username', data.username);
+          localStorage.setItem('feriaName', data.feriaName || 'Mi Feria');
+          showDashboard();
+        } else {
+          const errData = await res.json();
+          alert(errData.error || 'Credenciales inválidas');
+        }
+      } catch (err) {
+        console.error(err);
+        alert('Error de conexión con el servidor.');
+      } finally {
+        setLoader(false);
+      }
+    });
+
+    // --- TAB 1: LOGICA DE RÚBRICA ---
+    let areasGlobal = [];
+
+    async function loadRubric() {
+      try {
+        const res = await apiRequest('/api/management/areas');
+        areasGlobal = await res.json();
+        
+        // Cargar dropdown en formulario de criterios
+        const select = document.getElementById('crit-area-select');
+        select.innerHTML = '<option value="">Selecciona un área...</option>';
+        areasGlobal.forEach(area => {
+          select.innerHTML += `<option value="${area.id}">${area.name}</option>`;
+        });
+
+        // Cargar acordeones
+        const container = document.getElementById('rubric-accordion-container');
+        container.innerHTML = '';
+        if (areasGlobal.length === 0) {
+          container.innerHTML = '<p style="color: var(--text-muted); font-style: italic;">No hay áreas creadas.</p>';
+          return;
+        }
+
+        areasGlobal.forEach(area => {
+          const critRows = area.criteria.map(crit => `
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1.5px solid var(--border);">
+              <div>
+                <strong>${crit.name}</strong> 
+                <span class="badge badge-primary">Rango: ${Math.round(crit.minScore)} - ${Math.round(crit.maxScore)}</span>
+              </div>
+              <button class="action-btn" onclick="deleteCriterion('${crit.id}')"><i data-lucide="trash-2" style="width: 16px; height: 16px;"></i></button>
+            </div>
+          `).join('') || '<p style="color: var(--text-muted); font-style: italic; font-size:14px;">No hay criterios en esta área.</p>';
+
+          container.innerHTML += `
+            <div class="accordion-header" onclick="toggleAccordion('area-${area.id}')">
+              <span>${area.name}</span>
+              <div style="display: flex; align-items: center; gap: 12px;" onclick="event.stopPropagation();">
+                <button class="action-btn" onclick="deleteArea('${area.id}')"><i data-lucide="trash-2" style="width: 16px; height:16px;"></i></button>
+                <i data-lucide="chevron-down" id="icon-area-${area.id}"></i>
+              </div>
+            </div>
+            <div class="accordion-content" id="content-area-${area.id}">
+              ${critRows}
+            </div>
+          `;
+        });
+
+        lucide.createIcons();
+
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    function toggleAccordion(id) {
+      const content = document.getElementById(`content-${id}`);
+      const icon = document.getElementById(`icon-${id}`);
+      const isVisible = content.style.display === 'block';
+      content.style.display = isVisible ? 'none' : 'block';
+      if (icon) {
+        icon.style.transform = isVisible ? 'rotate(0)' : 'rotate(180deg)';
+      }
+    }
+
+    // Crear Área
+    document.getElementById('create-area-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      setLoader(true);
+      const name = document.getElementById('new-area-name').value.trim();
+      try {
+        const res = await apiRequest('/api/management/areas', 'POST', { name });
+        if (res.ok) {
+          document.getElementById('new-area-name').value = '';
+          await loadRubric();
+        } else {
+          const err = await res.json();
+          alert(err.error);
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoader(false);
+      }
+    });
+
+    // Eliminar Área
+    async function deleteArea(areaId) {
+      if (!confirm('¿Seguro que deseas eliminar esta área y todos sus criterios?')) return;
+      setLoader(true);
+      try {
+        const res = await apiRequest(`/api/management/areas/${areaId}`, 'DELETE');
+        if (res.ok) {
+          await loadRubric();
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoader(false);
+      }
+    }
+
+    // Crear Criterio
+    document.getElementById('create-criterion-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      setLoader(true);
+      const areaId = document.getElementById('crit-area-select').value;
+      const name = document.getElementById('new-crit-name').value.trim();
+      const minScore = parseFloat(document.getElementById('new-crit-min').value);
+      const maxScore = parseFloat(document.getElementById('new-crit-max').value);
+
+      if (maxScore <= minScore) {
+        alert('La nota máxima debe ser mayor que la mínima.');
+        setLoader(false);
+        return;
+      }
+
+      try {
+        const res = await apiRequest('/api/management/criteria', 'POST', { areaId, name, minScore, maxScore });
+        if (res.ok) {
+          document.getElementById('new-crit-name').value = '';
+          document.getElementById('new-crit-min').value = '0';
+          document.getElementById('new-crit-max').value = '100';
+          await loadRubric();
+        } else {
+          const err = await res.json();
+          alert(err.error);
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoader(false);
+      }
+    });
+
+    // Eliminar Criterio
+    async function deleteCriterion(critId) {
+      if (!confirm('¿Seguro que deseas eliminar este criterio?')) return;
+      setLoader(true);
+      try {
+        const res = await apiRequest(`/api/management/criteria/${critId}`, 'DELETE');
+        if (res.ok) {
+          await loadRubric();
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoader(false);
+      }
+    }
+
+    // --- TAB 2: STANDS Y CARGA MASIVA ---
+    let standsGlobal = [];
+
+    async function loadStandsAndProjects() {
+      try {
+        const res = await apiRequest('/api/management/stands');
+        standsGlobal = await res.json();
+
+        // Dropdown para agregar integrante
+        const memberSelect = document.getElementById('member-stand-select');
+        memberSelect.innerHTML = '<option value="">Selecciona un stand...</option>';
+        // Dropdown para asignación de jurados (Tab 3)
+        const evalSelect = document.getElementById('eval-stand-select');
+        evalSelect.innerHTML = '<option value="">Selecciona un stand...</option>';
+
+        standsGlobal.forEach(stand => {
+          const opt = `<option value="${stand.id}">${stand.number} - ${stand.name}</option>`;
+          memberSelect.innerHTML += opt;
+          evalSelect.innerHTML += opt;
+        });
+
+        // Tabla de stands
+        const tbody = document.getElementById('stands-table-body');
+        tbody.innerHTML = '';
+        if (standsGlobal.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color: var(--text-muted);">No hay stands registrados.</td></tr>';
+          return;
+        }
+
+        standsGlobal.forEach(stand => {
+          let cursoStr = '';
+          if (stand.metadata && typeof stand.metadata === 'object') {
+            cursoStr = stand.metadata.curso || '';
+          }
+
+          const membersChips = stand.members.map(m => `
+            <span class="badge badge-primary" style="display:inline-flex; align-items:center; gap:4px; margin: 2px;">
+              ${m.fullName}
+              <i data-lucide="x" style="width:12px; height:12px; cursor:pointer;" onclick="deleteMember('${m.id}')"></i>
+            </span>
+          `).join('') || '<span style="color:var(--text-muted); font-style:italic; font-size:13px;">Sin integrantes</span>';
+
+          tbody.innerHTML += `
+            <tr>
+              <td><strong>${stand.number}</strong></td>
+              <td>${stand.name}</td>
+              <td>${cursoStr}</td>
+              <td>${membersChips}</td>
+              <td style="text-align: center;">
+                <button class="action-btn" onclick="deleteStand('${stand.id}')"><i data-lucide="trash-2" style="width:18px; height:18px;"></i></button>
+              </td>
+            </tr>
+          `;
+        });
+
+        lucide.createIcons();
+
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    // Importar de Google Sheets
+    document.getElementById('import-sheets-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const urlVal = document.getElementById('sheets-url').value.trim();
+      const overwriteVal = document.getElementById('overwrite-sheets').checked;
+
+      if (overwriteVal && !confirm('¿Estás seguro de que quieres sobreescribir los datos actuales? Se borrarán todos los stands, rúbricas y asignaciones actuales de la feria.')) return;
+
+      setLoader(true);
+      try {
+        const res = await apiRequest('/api/management/import-sheets', 'POST', { 
+          spreadsheetUrl: urlVal, 
+          overwrite: overwriteVal 
+        });
+
+        if (res.ok) {
+          alert('Carga masiva completada con éxito.');
+          document.getElementById('sheets-url').value = '';
+          document.getElementById('overwrite-sheets').checked = false;
+          await loadStandsAndProjects();
+        } else {
+          const err = await res.json();
+          alert(err.error);
+        }
+      } catch (err) {
+        console.error(err);
+        alert('Error de red al importar desde Sheets.');
+      } finally {
+        setLoader(false);
+      }
+    });
+
+    // Crear Stand Manual
+    document.getElementById('create-stand-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      setLoader(true);
+      const number = document.getElementById('stand-number').value.trim();
+      const name = document.getElementById('stand-name').value.trim();
+      const curso = document.getElementById('stand-course').value.trim();
+
+      try {
+        const res = await apiRequest('/api/management/stands', 'POST', { 
+          number, 
+          name, 
+          metadata: curso ? { curso } : undefined 
+        });
+
+        if (res.ok) {
+          document.getElementById('stand-number').value = '';
+          document.getElementById('stand-name').value = '';
+          document.getElementById('stand-course').value = '';
+          await loadStandsAndProjects();
+        } else {
+          const err = await res.json();
+          alert(err.error);
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoader(false);
+      }
+    });
+
+    // Eliminar Stand
+    async function deleteStand(standId) {
+      if (!confirm('¿Seguro que deseas eliminar este stand?')) return;
+      setLoader(true);
+      try {
+        const res = await apiRequest(`/api/management/stands/${standId}`, 'DELETE');
+        if (res.ok) {
+          await loadStandsAndProjects();
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoader(false);
+      }
+    }
+
+    // Crear Integrante
+    document.getElementById('create-member-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      setLoader(true);
+      const standId = document.getElementById('member-stand-select').value;
+      const fullName = document.getElementById('member-name').value.trim();
+
+      try {
+        const res = await apiRequest(`/api/management/stands/${standId}/members`, 'POST', { fullName });
+        if (res.ok) {
+          document.getElementById('member-name').value = '';
+          await loadStandsAndProjects();
+        } else {
+          const err = await res.json();
+          alert(err.error);
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoader(false);
+      }
+    });
+
+    // Eliminar Integrante
+    async function deleteMember(memberId) {
+      if (!confirm('¿Seguro que deseas eliminar este integrante?')) return;
+      setLoader(true);
+      try {
+        const res = await apiRequest(`/api/management/members/${memberId}`, 'DELETE');
+        if (res.ok) {
+          await loadStandsAndProjects();
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoader(false);
+      }
+    }
+
+    // --- TAB 3: JURADOS Y ASIGNACIONES ---
+    async function loadEvaluatorsTab() {
+      // Cargar dropdowns de Stands (si no se han cargado)
+      if (standsGlobal.length === 0) {
+        await loadStandsAndProjects();
+      } else {
+        const select = document.getElementById('eval-stand-select');
+        select.innerHTML = '<option value="">Selecciona un stand...</option>';
+        standsGlobal.forEach(stand => {
+          select.innerHTML += `<option value="${stand.id}">${stand.number} - ${stand.name}</option>`;
+        });
+      }
+
+      // Cargar checklist de áreas
+      if (areasGlobal.length === 0) {
+        const res = await apiRequest('/api/management/areas');
+        areasGlobal = await res.json();
+      }
+
+      const listDiv = document.getElementById('eval-areas-checklist');
+      listDiv.innerHTML = '';
+      if (areasGlobal.length === 0) {
+        listDiv.innerHTML = '<p style="color:var(--text-muted); font-size:12px; font-style:italic;">Crea áreas primero en la pestaña de Rúbricas.</p>';
+      } else {
+        areasGlobal.forEach(area => {
+          listDiv.innerHTML += `
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+              <input type="checkbox" name="eval-areas-box" value="${area.id}" style="width:16px; height:16px; cursor:pointer;">
+              <label style="font-size:13px; cursor:pointer;">${area.name}</label>
+            </div>
+          `;
+        });
+      }
+
+      // Cargar lista de asignaciones
+      loadAssignmentsList();
+    }
+
+    async function loadAssignmentsList() {
+      try {
+        const res = await apiRequest('/api/management/evaluators');
+        const data = await res.json();
+
+        const tbody = document.getElementById('evaluators-table-body');
+        tbody.innerHTML = '';
+        if (data.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color: var(--text-muted);">No hay asignaciones de evaluadores.</td></tr>';
+          return;
+        }
+
+        data.forEach(item => {
+          const areaBadges = item.areas.map(a => `<span class="badge badge-primary">${a.name}</span>`).join(' ') || '<span style="color:var(--text-muted); font-size:13px;">Todas</span>';
+          
+          tbody.innerHTML += `
+            <tr>
+              <td><strong>${item.user.username}</strong></td>
+              <td>${item.stand.number} - ${item.stand.name}</td>
+              <td><span class="badge ${item.roleInStand === 'JURADO' ? 'badge-success' : 'badge-warning'}">${item.roleInStand}</span></td>
+              <td>${areaBadges}</td>
+              <td style="text-align: center;">
+                <button class="action-btn" onclick="deleteAssignment('${item.id}')"><i data-lucide="user-x" style="width:18px; height:18px;"></i></button>
+              </td>
+            </tr>
+          `;
+        });
+
+        lucide.createIcons();
+
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    // Crear y asignar evaluador
+    document.getElementById('assign-eval-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      setLoader(true);
+      const usernameVal = document.getElementById('eval-username').value.trim();
+      const passwordVal = document.getElementById('eval-password').value.trim();
+      const roleVal = document.getElementById('eval-role-select').value;
+      const standIdVal = document.getElementById('eval-stand-select').value;
+
+      // Obtener áreas seleccionadas
+      const boxes = document.querySelectorAll('input[name="eval-areas-box"]:checked');
+      const areaIdsVal = Array.from(boxes).map(box => box.value);
+
+      try {
+        const res = await apiRequest('/api/management/assignments', 'POST', {
+          username: usernameVal,
+          password: passwordVal,
+          role: roleVal,
+          standId: standIdVal,
+          areaIds: areaIdsVal
+        });
+
+        if (res.ok) {
+          document.getElementById('eval-username').value = '';
+          document.getElementById('eval-password').value = '';
+          // Desmarcar checklist
+          document.querySelectorAll('input[name="eval-areas-box"]').forEach(box => box.checked = false);
+          await loadEvaluatorsTab();
+        } else {
+          const err = await res.json();
+          alert(err.error);
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoader(false);
+      }
+    });
+
+    // Eliminar asignación
+    async function deleteAssignment(id) {
+      if (!confirm('¿Seguro que deseas eliminar este rol de evaluación?')) return;
+      setLoader(true);
+      try {
+        const res = await apiRequest(`/api/management/assignments/${id}`, 'DELETE');
+        if (res.ok) {
+          await loadAssignmentsList();
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoader(false);
+      }
+    }
+
+    // --- TAB 4: RESULTADOS Y EXPORTACIÓN ---
+    async function loadResults() {
+      try {
+        const res = await apiRequest('/api/management/results');
+        const data = await res.json();
+        
+        const tbody = document.getElementById('results-table-body');
+        tbody.innerHTML = '';
+        
+        if (!data.results || data.results.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color: var(--text-muted);">Aún no hay resultados de evaluaciones.</td></tr>';
+          return;
+        }
+
+        data.results.forEach(stand => {
+          let cursoStr = '';
+          // Buscar en stands locales para saber el curso
+          const localSt = standsGlobal.find(s => s.id === stand.id);
+          if (localSt && localSt.metadata && typeof localSt.metadata === 'object') {
+            cursoStr = localSt.metadata.curso || '';
+          }
+
+          // Calcular avance global de jurados
+          let juradosCompleted = 0;
+          let juradosTotal = stand.jurados.length;
+          stand.jurados.forEach(j => { if (j.isCompleted) juradosCompleted++; });
+
+          const progressText = juradosTotal > 0 
+            ? `<span class="badge ${juradosCompleted === juradosTotal ? 'badge-success' : 'badge-warning'}">${juradosCompleted}/${juradosTotal} Calificados</span>`
+            : '<span style="color:var(--text-muted); font-size:13px; font-style:italic;">Sin Asignar</span>';
+
+          tbody.innerHTML += `
+            <tr>
+              <td><strong>${stand.number}</strong></td>
+              <td>${stand.name}</td>
+              <td>${cursoStr || '<span style="color:var(--text-muted); font-style:italic;">-</span>'}</td>
+              <td><strong style="color:var(--primary); font-size:16px;">${stand.avgJuradoScore.toFixed(2)}</strong></td>
+              <td><strong style="color:var(--warning); font-size:16px;">${stand.avgDelegadoScore.toFixed(2)}</strong></td>
+              <td>${progressText}</td>
+            </tr>
+          `;
+        });
+
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    // Exportar CSV
+    async function exportCSV() {
+      setLoader(true);
+      try {
+        const response = await fetch(`${apiHost}/api/management/export-csv`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (response.ok) {
+          const blob = await response.blob();
+          const downloadUrl = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = downloadUrl;
+          a.download = 'resultados_feria_escolar.csv';
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+        } else {
+          alert('Error al descargar el archivo CSV');
+        }
+      } catch (err) {
+        console.error(err);
+        alert('Error de red al intentar descargar los resultados.');
+      } finally {
+        setLoader(false);
+      }
+    }
+
+  </script>
+</body>
+</html>

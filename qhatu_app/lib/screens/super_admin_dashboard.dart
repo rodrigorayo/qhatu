@@ -141,6 +141,7 @@ class _CreateFeriaFormState extends State<CreateFeriaForm> {
   final _adminUserController = TextEditingController();
   final _adminPassController = TextEditingController();
   bool _isLoading = false;
+  bool _obscureAdminPass = true;
 
   void _submit() async {
     if (!_formKey.currentState!.validate()) return;
@@ -228,9 +229,24 @@ class _CreateFeriaFormState extends State<CreateFeriaForm> {
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: _adminPassController,
-                  decoration: const InputDecoration(labelText: 'Contraseña Admin', border: OutlineInputBorder()),
+                  obscureText: _obscureAdminPass,
+                  decoration: InputDecoration(
+                    labelText: 'Contraseña Admin',
+                    border: const OutlineInputBorder(),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscureAdminPass
+                            ? Icons.visibility_off_outlined
+                            : Icons.visibility_outlined,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _obscureAdminPass = !_obscureAdminPass;
+                        });
+                      },
+                    ),
+                  ),
                   validator: (val) => val == null || val.isEmpty ? 'Requerido' : null,
-                  obscureText: true,
                 ),
                 const SizedBox(height: 24),
                 FilledButton(

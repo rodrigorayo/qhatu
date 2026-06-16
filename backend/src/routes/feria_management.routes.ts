@@ -4,6 +4,7 @@ import { createCriterion, deleteCriterion } from '../controllers/criterion.contr
 import { getStands, createStand, deleteStand, addMemberToStand, addMembersBatch, updateMember, deleteMember } from '../controllers/stand.controller';
 import { createEvaluatorAndAssign, getEvaluators, deleteAssignment } from '../controllers/assignment.controller';
 import { getResults } from '../controllers/evaluation.controller';
+import { importSheets, exportResultsCSV } from '../controllers/sheets.controller';
 import { authenticateToken, requireRole } from '../middlewares/auth.middleware';
 
 const router = Router();
@@ -35,7 +36,9 @@ router.get('/evaluators', getEvaluators);
 router.post('/assignments', createEvaluatorAndAssign);
 router.delete('/assignments/:id', deleteAssignment);
 
-// --- Rutas de Resultados ---
+// --- Rutas de Resultados y Google Sheets/CSV ---
 router.get('/results', getResults);
+router.post('/import-sheets', importSheets);
+router.get('/export-csv', exportResultsCSV);
 
 export default router;

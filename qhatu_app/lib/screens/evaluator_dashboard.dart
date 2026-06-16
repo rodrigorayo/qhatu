@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'dart:async';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../database/isar_service.dart';
 import '../database/models/local_models.dart';
@@ -18,11 +19,46 @@ class _EvaluatorDashboardState extends State<EvaluatorDashboard> {
   final IsarService _isarService = IsarService();
   List<LocalAssignment> _assignments = [];
   bool _isSyncing = false;
+  bool _isOffline = false;
+  Timer? _offlineCheckTimer;
 
   @override
   void initState() {
     super.initState();
     _loadLocalData();
+    _syncData(showFeedback: false); // Sincronizar automáticamente al iniciar
+    _offlineCheckTimer = Timer.periodic(const Duration(seconds: 10), (timer) {
+      _checkConnectivity();
+    });
+  }
+
+  @override
+  void dispose() {
+    _offlineCheckTimer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _checkConnectivity() async {
+    try {
+      final response = await http.get(Uri.parse('${Config.baseUrl}/health')).timeout(const Duration(seconds: 3));
+      if (response.statusCode == 200) {
+        if (_isOffline) {
+          setState(() {
+            _isOffline = false;
+          });
+          // Si antes estábamos offline y ahora estamos online, intentamos sincronizar
+          _syncData(showFeedback: false);
+        }
+      } else {
+        throw Exception();
+      }
+    } catch (_) {
+      if (!_isOffline) {
+        setState(() {
+          _isOffline = true;
+        });
+      }
+    }
   }
 
   Future<void> _loadLocalData() async {
@@ -32,8 +68,8 @@ class _EvaluatorDashboardState extends State<EvaluatorDashboard> {
     });
   }
 
-  Future<void> _syncData() async {
-    setState(() => _isSyncing = true);
+  Future<void> _syncData({bool showFeedback = false}) async {
+    if (mounted) setState(() => _isSyncing = true);
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('token');
@@ -102,6 +138,12 @@ class _EvaluatorDashboardState extends State<EvaluatorDashboard> {
         await _loadLocalData();
 
         if (mounted) {
+          setState(() {
+            _isOffline = false;
+          });
+        }
+
+        if (showFeedback && mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Sincronización Completada'), backgroundColor: Colors.green),
           );
@@ -112,6 +154,11 @@ class _EvaluatorDashboardState extends State<EvaluatorDashboard> {
 
     } catch (e) {
       if (mounted) {
+        setState(() {
+          _isOffline = true;
+        });
+      }
+      if (showFeedback && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Error de sincronización (Posible Offline)'), backgroundColor: Colors.orange),
         );
@@ -129,38 +176,34 @@ class _EvaluatorDashboardState extends State<EvaluatorDashboard> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Mis Evaluaciones'),
-        actions: [
-          IconButton(
-            icon: _isSyncing 
-              ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) 
-              : const Icon(Icons.sync),
-            onPressed: _isSyncing ? null : _syncData,
-            tooltip: 'Sincronizar Datos',
-          ),
-          IconButton(icon: const Icon(Icons.logout), onPressed: _logout),
-        ],
-      ),
-      body: _assignments.isEmpty
-          ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.cloud_off, size: 80, color: Colors.grey),
-                  const SizedBox(height: 16),
-                  const Text('No hay datos locales.'),
-                  const SizedBox(height: 16),
-                  FilledButton.icon(
-                    icon: const Icon(Icons.cloud_download),
-                    label: const Text('Sincronizar Ahora'),
-                    onPressed: _syncData,
-                  )
-                ],
+    Widget mainContent = _assignments.isEmpty
+        ? RefreshIndicator(
+            onRefresh: () => _syncData(showFeedback: true),
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: Container(
+                height: MediaQuery.of(context).size.height * 0.7,
+                alignment: Alignment.center,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.cloud_off, size: 80, color: Colors.grey),
+                    const SizedBox(height: 16),
+                    const Text('No hay datos locales.'),
+                    const SizedBox(height: 16),
+                    FilledButton.icon(
+                      icon: const Icon(Icons.cloud_download),
+                      label: const Text('Sincronizar Ahora'),
+                      onPressed: () => _syncData(showFeedback: true),
+                    )
+                  ],
+                ),
               ),
-            )
-          : ListView.builder(
+            ),
+          )
+        : RefreshIndicator(
+            onRefresh: () => _syncData(showFeedback: true),
+            child: ListView.builder(
               padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 88),
               itemCount: _assignments.length,
               itemBuilder: (context, index) {
@@ -177,15 +220,58 @@ class _EvaluatorDashboardState extends State<EvaluatorDashboard> {
                     subtitle: Text('ID: ${assignment.standNumber}\nRol: ${assignment.roleInStand}'),
                     trailing: const Icon(Icons.arrow_forward_ios),
                     isThreeLine: true,
-                    onTap: () {
-                      context.push('/evaluator/form', extra: assignment);
+                    onTap: () async {
+                      await context.push('/evaluator/form', extra: assignment);
+                      _syncData(showFeedback: false); // Sincronizar automáticamente al volver
                     },
                   ),
                 );
               },
             ),
+          );
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Mis Evaluaciones'),
+        actions: [
+          IconButton(
+            icon: _isSyncing 
+              ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) 
+              : const Icon(Icons.sync),
+            onPressed: _isSyncing ? null : () => _syncData(showFeedback: true),
+            tooltip: 'Sincronizar Datos',
+          ),
+          IconButton(icon: const Icon(Icons.logout), onPressed: _logout),
+        ],
+      ),
+      body: Column(
+        children: [
+          if (_isOffline)
+            Container(
+              color: Colors.orange.shade800,
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+              width: double.infinity,
+              child: const Row(
+                children: [
+                  Icon(Icons.wifi_off, color: Colors.white, size: 16),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Sin conexión a Internet. Las notas se guardarán en el celular y se subirán al recuperar señal.',
+                      style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          Expanded(child: mainContent),
+        ],
+      ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => context.push('/evaluator/select_stand'),
+        onPressed: () async {
+          await context.push('/evaluator/select_stand');
+          _syncData(showFeedback: false); // Sincronizar automáticamente al volver
+        },
         icon: const Icon(Icons.add),
         label: const Text('Calificar otros Stands'),
       ),

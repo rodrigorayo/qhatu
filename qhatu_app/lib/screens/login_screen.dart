@@ -198,7 +198,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 Center(
                   child: Text(
-                    'v0.1.0-patch4',
+                    'v0.1.0-patch5',
                     style: TextStyle(
                       color: colorScheme.onSurfaceVariant.withOpacity(0.5),
                       fontSize: 12,

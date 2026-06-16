@@ -4,6 +4,9 @@ import 'package:go_router/go_router.dart';
 import '../database/isar_service.dart';
 import '../database/models/local_models.dart';
 import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+import '../config.dart';
 
 class EvaluationFormScreen extends StatefulWidget {
   final LocalAssignment assignment;
@@ -116,6 +119,7 @@ class _EvaluationFormScreenState extends State<EvaluationFormScreen> {
         ? _selectedMemberId! 
         : widget.assignment.standId;
 
+    // 1. Guardar localmente como fail-safe
     for (var criterion in _criteria) {
       final score = _scores[criterion.criterionId] ?? criterion.minScore;
       final comment = _comments[criterion.criterionId] ?? '';
@@ -131,11 +135,73 @@ class _EvaluationFormScreenState extends State<EvaluationFormScreen> {
       await _isarService.savePendingScore(pendingScore);
     }
 
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Calificaciones guardadas localmente. ¡Recuerda Sincronizar!'), backgroundColor: Colors.green),
+    setState(() => _isLoading = true);
+
+    // 2. Intentar subir inmediatamente al servidor
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+
+      List<dynamic> standScores = [];
+      List<dynamic> memberScores = [];
+
+      for (var criterion in _criteria) {
+        final score = _scores[criterion.criterionId] ?? criterion.minScore;
+        final comment = _comments[criterion.criterionId] ?? '';
+        if (widget.assignment.roleInStand == 'DELEGADO') {
+          memberScores.add({
+            'memberId': targetId,
+            'criterionId': criterion.criterionId,
+            'rawScore': score,
+            'comments': comment,
+          });
+        } else {
+          standScores.add({
+            'standId': targetId,
+            'criterionId': criterion.criterionId,
+            'rawScore': score,
+            'comments': comment,
+          });
+        }
+      }
+
+      final response = await http.post(
+        Uri.parse('${Config.baseUrl}/api/evaluation/sync'),
+        headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer $token'},
+        body: jsonEncode({
+          'standScores': standScores,
+          'memberScores': memberScores,
+        }),
       );
-      context.pop();
+
+      if (response.statusCode == 200) {
+        // Borrar de pendientes si la subida fue exitosa
+        for (var criterion in _criteria) {
+          await _isarService.deletePendingScore('${targetId}_${criterion.criterionId}');
+        }
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Evaluación guardada en el servidor exitosamente'), backgroundColor: Colors.green),
+          );
+        }
+      } else {
+        throw Exception();
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Guardado localmente. Se subirá al servidor automáticamente al volver la señal.'),
+            backgroundColor: Colors.orange,
+            duration: Duration(seconds: 4),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        context.pop();
+      }
     }
   }
 
