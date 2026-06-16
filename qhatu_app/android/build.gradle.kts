@@ -22,3 +22,37 @@ subprojects {
 tasks.register<Delete>("clean") {
     delete(rootProject.layout.buildDirectory)
 }
+
+subprojects {
+    val configureProject = { prj: Project ->
+        if (prj.plugins.hasPlugin("com.android.library") || prj.plugins.hasPlugin("com.android.application")) {
+            val android = prj.extensions.findByName("android")
+            if (android != null) {
+                try {
+                    val getNamespace = android.javaClass.getMethod("getNamespace")
+                    val setNamespace = android.javaClass.getMethod("setNamespace", String::class.java)
+                    if (getNamespace.invoke(android) == null) {
+                        val defaultNamespace = if (prj.group.toString().isNotEmpty()) {
+                            prj.group.toString()
+                        } else {
+                            "com.qhatu.${prj.name.replace("-", "_").replace(".", "_")}"
+                        }
+                        setNamespace.invoke(android, defaultNamespace)
+                        logger.quiet("Auto-configured namespace: $defaultNamespace for subproject: ${prj.name}")
+                    }
+                } catch (e: Exception) {
+                    // Ignorar
+                }
+            }
+        }
+    }
+
+    if (project.state.executed) {
+        configureProject(project)
+    } else {
+        project.afterEvaluate {
+            configureProject(project)
+        }
+    }
+}
+
