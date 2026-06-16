@@ -98,36 +98,34 @@ class _LoginScreenState extends State<LoginScreen> {
               children: [
                 // Logo animado
                 Icon(
-                  Icons.event_available_rounded,
-                  size: 100,
+                  Icons.auto_awesome_outlined,
+                  size: 80,
                   color: colorScheme.primary,
-                )
-                .animate()
-                .scale(duration: 600.ms, curve: Curves.easeOutBack)
-                .fadeIn(),
-                
-                const SizedBox(height: 24),
-                
-                Text(
-                  'Qhatu',
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: colorScheme.onSurface,
-                  ),
-                ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.2),
+                ).animate().scale(delay: 100.ms).fadeIn(),
+
+                const SizedBox(height: 16),
 
                 Text(
-                  'Gestión de Ferias',
+                  'Qhatu Ferias',
+                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: colorScheme.onSurface,
+                      ),
                   textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                ).animate().fadeIn(delay: 300.ms).slideY(begin: 0.2),
+                ).animate().fadeIn(delay: 200.ms),
 
-                const SizedBox(height: 48),
+                const SizedBox(height: 8),
 
-                // Campos de texto grandes y modernos (Material 3)
+                Text(
+                  'Ingresa tus credenciales para continuar',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                  textAlign: TextAlign.center,
+                ).animate().fadeIn(delay: 300.ms),
+
+                const SizedBox(height: 32),
+
                 TextField(
                   controller: _usernameController,
                   decoration: InputDecoration(
@@ -182,6 +180,19 @@ class _LoginScreenState extends State<LoginScreen> {
                           style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                         ),
                 ).animate().fadeIn(delay: 600.ms).scale(),
+
+                const SizedBox(height: 24),
+
+                Center(
+                  child: Text(
+                    'v0.1.0-alpha',
+                    style: TextStyle(
+                      color: colorScheme.onSurfaceVariant.withOpacity(0.5),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
