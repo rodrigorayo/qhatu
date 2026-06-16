@@ -23,13 +23,13 @@ export const getMyAssignments = async (req: AuthRequest, res: Response): Promise
     const result = [];
     for (const assignment of assignments) {
       // Obtener criterios asignados para contar el total esperado
-      const assignedAreas = assignment.areas;
+      const assignedAreas = assignment.areas as any[];
       const targetCriteriaIds = assignedAreas.length > 0
-        ? assignedAreas.flatMap(a => a.criteria.map(c => c.id))
+        ? assignedAreas.flatMap((a: any) => a.criteria.map((c: any) => c.id))
         : (await prisma.area.findMany({
-            where: { feriaId: req.user?.feriaId },
+            where: { feriaId: req.user?.feriaId || undefined },
             include: { criteria: true }
-          })).flatMap(a => a.criteria.map(c => c.id));
+          }) as any[]).flatMap((a: any) => a.criteria.map((c: any) => c.id));
 
       let isEvaluated = false;
       if (assignment.roleInStand === 'JURADO') {
