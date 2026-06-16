@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - 'qhatu_app/**'
+      - '.github/workflows/**'
 
 jobs:
   patch:
