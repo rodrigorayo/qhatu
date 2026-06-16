@@ -30,8 +30,8 @@ class LocalCriterion {
   late String areaId;
   late String areaName;
   late String name;
-  late double minScore;
-  late double maxScore;
+  double minScore = 0.0;
+  double maxScore = 100.0;
 }
 
 @collection

@@ -52,28 +52,46 @@ class _EvaluationFormScreenState extends State<EvaluationFormScreen> {
   }
 
   Future<void> _loadCriteria() async {
-    var criteria = await _isarService.getCriteria();
-    
-    // Si la asignación tiene áreas específicas, filtrar los criterios
-    List<String> assignedAreaIds = [];
     try {
-      assignedAreaIds = List<String>.from(jsonDecode(widget.assignment.assignedAreaIdsJson));
-    } catch (_) {}
-    
-    if (assignedAreaIds.isNotEmpty) {
-      criteria = criteria.where((c) => assignedAreaIds.contains(c.areaId)).toList();
-    }
-    
-    setState(() {
-      _criteria = criteria;
-      for (var c in criteria) {
-        final defScore = c.minScore;
-        _scores[c.criterionId] = defScore;
-        _scoreControllers[c.criterionId] = TextEditingController(text: defScore.round().toString());
-        _showSlider[c.criterionId] = false; // Deslizador oculto por defecto
+      final criteria = await _isarService.getCriteria();
+      
+      // Si la asignación tiene áreas específicas, filtrar los criterios
+      List<String> assignedAreaIds = [];
+      try {
+        final jsonStr = widget.assignment.assignedAreaIdsJson;
+        if (jsonStr != null && jsonStr.isNotEmpty) {
+          assignedAreaIds = List<String>.from(jsonDecode(jsonStr));
+        }
+      } catch (_) {}
+      
+      List<LocalCriterion> filteredCriteria = criteria;
+      if (assignedAreaIds.isNotEmpty) {
+        filteredCriteria = criteria.where((c) {
+          final aId = c.areaId;
+          if (aId == null) return false;
+          return assignedAreaIds.contains(aId);
+        }).toList();
       }
-      _isLoading = false;
-    });
+      
+      setState(() {
+        _criteria = filteredCriteria;
+        for (var c in filteredCriteria) {
+          double defScore = 0.0;
+          try {
+            defScore = c.minScore;
+          } catch (_) {}
+          _scores[c.criterionId] = defScore;
+          _scoreControllers[c.criterionId] = TextEditingController(text: defScore.round().toString());
+          _showSlider[c.criterionId] = false;
+        }
+        _isLoading = false;
+      });
+    } catch (e) {
+      print("Error loading criteria: $e");
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
 
   void _saveLocalScores() async {
