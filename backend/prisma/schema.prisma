@@ -1,0 +1,163 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  SUPER_ADMIN
+  FERIA_ADMIN
+  EVALUADOR // Usado tanto para Jurados como para Delegados
+}
+
+enum AssignmentRole {
+  JURADO // Evalúa al Stand
+  DELEGADO // Evalúa a los Miembros del Stand
+}
+
+enum CalculationType {
+  SUMATIVE
+  WEIGHTED
+}
+
+enum FeriaStatus {
+  DRAFT
+  ACTIVE
+  COMPLETED
+}
+
+model User {
+  id               String   @id @default(uuid())
+  username         String   @unique
+  passwordHash     String
+  role             Role     @default(EVALUADOR)
+  feriaId          String?  // Nulo para el SUPER_ADMIN, requerido para los demás
+  feria            Feria?   @relation(fields: [feriaId], references: [id], onDelete: Cascade)
+  metadata         Json?    // Campos extras (ej. teléfono, especialidad)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  assignments      Assignment[]
+  standEvals       EvaluationStand[]
+  memberEvals      EvaluationMember[]
+}
+
+model Feria {
+  id               String          @id @default(uuid())
+  name             String
+  description      String?
+  calculationType  CalculationType @default(SUMATIVE)
+  status           FeriaStatus     @default(DRAFT)
+  startDate        DateTime?
+  endDate          DateTime?
+  formTemplate     Json?           // Define los campos obligatorios para Stands y Miembros en esta feria
+  metadata         Json?           // Metadatos adicionales de la feria
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  users            User[]
+  areas            Area[]
+  stands           Stand[]
+}
+
+model Area {
+  id               String   @id @default(uuid())
+  feriaId          String
+  feria            Feria    @relation(fields: [feriaId], references: [id], onDelete: Cascade)
+  name             String
+  weightPercentage Float?   // Solo se usa si Feria.calculationType == WEIGHTED
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  criteria         Criterion[]
+}
+
+model Criterion {
+  id               String   @id @default(uuid())
+  areaId           String
+  area             Area     @relation(fields: [areaId], references: [id], onDelete: Cascade)
+  name             String
+  minScore         Float    // Ej: 1
+  maxScore         Float    // Ej: 45
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  standEvals       EvaluationStand[]
+  memberEvals      EvaluationMember[]
+}
+
+model Stand {
+  id               String   @id @default(uuid())
+  feriaId          String
+  feria            Feria    @relation(fields: [feriaId], references: [id], onDelete: Cascade)
+  name             String
+  number           String
+  metadata         Json?    // Datos dinámicos según el tipo de feria (ej. rubro, nivel escolar)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  members          Member[]
+  assignments      Assignment[]
+  standEvals       EvaluationStand[]
+}
+
+model Member {
+  id               String   @id @default(uuid())
+  standId          String
+  stand            Stand    @relation(fields: [standId], references: [id], onDelete: Cascade)
+  fullName         String
+  metadata         Json?    // Datos dinámicos (ej. edad, curso, antigüedad, cargo)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  memberEvals      EvaluationMember[]
+}
+
+model Assignment {
+  id               String         @id @default(uuid())
+  userId           String
+  user             User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  standId          String
+  stand            Stand          @relation(fields: [standId], references: [id], onDelete: Cascade)
+  roleInStand      AssignmentRole // Es Jurado o es Delegado para este stand específico
+  createdAt        DateTime       @default(now())
+
+  @@unique([userId, standId, roleInStand])
+}
+
+model EvaluationStand {
+  id               String   @id @default(uuid())
+  standId          String
+  stand            Stand    @relation(fields: [standId], references: [id], onDelete: Cascade)
+  juradoId         String
+  jurado           User     @relation(fields: [juradoId], references: [id], onDelete: Cascade)
+  criterionId      String
+  criterion        Criterion @relation(fields: [criterionId], references: [id], onDelete: Cascade)
+  
+  rawScore         Float    // La nota que ingresa el jurado (del 0 al 100)
+  comments         String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@unique([standId, juradoId, criterionId])
+}
+
+model EvaluationMember {
+  id               String   @id @default(uuid())
+  memberId         String
+  member           Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  delegadoId       String
+  delegado         User     @relation(fields: [delegadoId], references: [id], onDelete: Cascade)
+  criterionId      String
+  criterion        Criterion @relation(fields: [criterionId], references: [id], onDelete: Cascade)
+  
+  rawScore         Float    // La nota que ingresa el delegado (del 0 al 100)
+  comments         String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@unique([memberId, delegadoId, criterionId])
+}

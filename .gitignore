@@ -1,0 +1,19 @@
+# Node backend
+backend/node_modules/
+backend/.env
+backend/dist/
+
+# Flutter app
+qhatu_app/build/
+qhatu_app/.dart_tool/
+qhatu_app/.flutter-plugins
+qhatu_app/.flutter-plugins-dependencies
+qhatu_app/android/.gradle/
+qhatu_app/ios/.symlinks/
+qhatu_app/ios/Pods/
+
+# General IDEs
+.idea/
+.vscode/
+*.iml
+*.log
