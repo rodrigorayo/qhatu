@@ -13,12 +13,14 @@ class ManageEvaluatorsScreen extends StatefulWidget {
 
 class _ManageEvaluatorsScreenState extends State<ManageEvaluatorsScreen> {
   List<dynamic> _stands = [];
+  List<dynamic> _areas = [];
   bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
     _fetchStands();
+    _fetchAreas();
   }
 
   Future<void> _fetchStands() async {
@@ -44,10 +46,27 @@ class _ManageEvaluatorsScreenState extends State<ManageEvaluatorsScreen> {
     }
   }
 
+  Future<void> _fetchAreas() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+
+      final response = await http.get(
+        Uri.parse('${Config.baseUrl}/api/management/areas'),
+        headers: {'Authorization': 'Bearer $token'},
+      );
+
+      if (response.statusCode == 200) {
+        setState(() => _areas = jsonDecode(response.body));
+      }
+    } catch (_) {}
+  }
+
   void _showAssignEvaluatorDialog(String standId, String standName) {
     final usernameController = TextEditingController();
     final passwordController = TextEditingController();
     String selectedRole = 'JURADO';
+    List<String> selectedAreaIds = [];
 
     showDialog(
       context: context,
@@ -55,24 +74,52 @@ class _ManageEvaluatorsScreenState extends State<ManageEvaluatorsScreen> {
         title: Text('Asignar Evaluador a $standName'),
         content: StatefulBuilder(
           builder: (context, setModalState) {
-            return Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(controller: usernameController, decoration: const InputDecoration(labelText: 'Usuario del Evaluador')),
-                TextField(controller: passwordController, decoration: const InputDecoration(labelText: 'Contraseña'), obscureText: true),
-                const SizedBox(height: 16),
-                DropdownButtonFormField<String>(
-                  value: selectedRole,
-                  decoration: const InputDecoration(labelText: 'Rol en este Stand'),
-                  items: const [
-                    DropdownMenuItem(value: 'JURADO', child: Text('Jurado (Evalúa Stand)')),
-                    DropdownMenuItem(value: 'DELEGADO', child: Text('Delegado (Evalúa Miembros)')),
-                  ],
-                  onChanged: (val) {
-                    if (val != null) setModalState(() => selectedRole = val);
-                  },
-                ),
-              ],
+            return SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TextField(controller: usernameController, decoration: const InputDecoration(labelText: 'Usuario del Evaluador')),
+                  TextField(controller: passwordController, decoration: const InputDecoration(labelText: 'Contraseña'), obscureText: true),
+                  const SizedBox(height: 16),
+                  DropdownButtonFormField<String>(
+                    value: selectedRole,
+                    decoration: const InputDecoration(labelText: 'Rol en este Stand'),
+                    items: const [
+                      DropdownMenuItem(value: 'JURADO', child: Text('Jurado (Evalúa Stand)')),
+                      DropdownMenuItem(value: 'DELEGADO', child: Text('Delegado (Evalúa Miembros)')),
+                    ],
+                    onChanged: (val) {
+                      if (val != null) setModalState(() => selectedRole = val);
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  const Text('Áreas asignadas (vacío = todas):', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                  const SizedBox(height: 8),
+                  if (_areas.isEmpty)
+                    const Text('No hay áreas creadas en la feria.', style: TextStyle(fontStyle: FontStyle.italic, fontSize: 12))
+                  else
+                    ..._areas.map((area) {
+                      final areaId = area['id'].toString();
+                      final isChecked = selectedAreaIds.contains(areaId);
+                      return CheckboxListTile(
+                        title: Text(area['name']),
+                        value: isChecked,
+                        dense: true,
+                        controlAffinity: ListTileControlAffinity.leading,
+                        onChanged: (val) {
+                          setModalState(() {
+                            if (val == true) {
+                              selectedAreaIds.add(areaId);
+                            } else {
+                              selectedAreaIds.remove(areaId);
+                            }
+                          });
+                        },
+                      );
+                    }).toList(),
+                ],
+              ),
             );
           }
         ),
@@ -82,7 +129,13 @@ class _ManageEvaluatorsScreenState extends State<ManageEvaluatorsScreen> {
             onPressed: () async {
               if (usernameController.text.trim().isEmpty) return;
               Navigator.pop(context);
-              await _assignEvaluator(standId, usernameController.text.trim(), passwordController.text.trim(), selectedRole);
+              await _assignEvaluator(
+                standId, 
+                usernameController.text.trim(), 
+                passwordController.text.trim(), 
+                selectedRole,
+                selectedAreaIds,
+              );
             },
             child: const Text('Asignar'),
           ),
@@ -91,7 +144,13 @@ class _ManageEvaluatorsScreenState extends State<ManageEvaluatorsScreen> {
     );
   }
 
-  Future<void> _assignEvaluator(String standId, String username, String password, String roleInStand) async {
+  Future<void> _assignEvaluator(
+    String standId, 
+    String username, 
+    String password, 
+    String roleInStand,
+    List<String> areaIds,
+  ) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('token');
@@ -104,6 +163,7 @@ class _ManageEvaluatorsScreenState extends State<ManageEvaluatorsScreen> {
           'username': username,
           'password': password,
           'roleInStand': roleInStand,
+          'areaIds': areaIds,
         }),
       );
 

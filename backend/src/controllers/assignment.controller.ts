@@ -8,7 +8,7 @@ export const createEvaluatorAndAssign = async (req: AuthRequest, res: Response):
     const feriaId = req.user?.feriaId;
     if (!feriaId) return res.status(403).json({ error: 'No tienes una feria asignada' });
 
-    const { username, password, standId, roleInStand } = req.body;
+    const { username, password, standId, roleInStand, areaIds } = req.body;
 
     // Verificar que el stand pertenece a la feria
     const stand = await prisma.stand.findUnique({ where: { id: standId } });
@@ -43,7 +43,10 @@ export const createEvaluatorAndAssign = async (req: AuthRequest, res: Response):
       data: {
         userId: evaluador.id,
         standId,
-        roleInStand: roleInStand || 'JURADO'
+        roleInStand: roleInStand || 'JURADO',
+        areas: areaIds && areaIds.length > 0 ? {
+          connect: areaIds.map((id: string) => ({ id }))
+        } : undefined
       }
     });
 
@@ -53,3 +56,51 @@ export const createEvaluatorAndAssign = async (req: AuthRequest, res: Response):
     res.status(500).json({ error: 'Error al asignar evaluador' });
   }
 };
+
+export const getEvaluators = async (req: AuthRequest, res: Response): Promise<any> => {
+  try {
+    const feriaId = req.user?.feriaId;
+    if (!feriaId) return res.status(403).json({ error: 'No tienes una feria asignada' });
+
+    const evaluators = await prisma.user.findMany({
+      where: { feriaId, role: 'EVALUADOR' },
+      include: {
+        assignments: {
+          include: {
+            stand: true,
+            areas: true
+          }
+        }
+      },
+      orderBy: { username: 'asc' }
+    });
+
+    res.json(evaluators);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error al obtener evaluadores' });
+  }
+};
+
+export const deleteAssignment = async (req: AuthRequest, res: Response): Promise<any> => {
+  try {
+    const feriaId = req.user?.feriaId;
+    const id = req.params.id as string;
+
+    const assignment = await prisma.assignment.findUnique({
+      where: { id },
+      include: { stand: true }
+    });
+
+    if (!assignment || assignment.stand.feriaId !== feriaId) {
+      return res.status(404).json({ error: 'Asignación no encontrada o acceso denegado' });
+    }
+
+    await prisma.assignment.delete({ where: { id } });
+    res.json({ message: 'Asignación eliminada exitosamente' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error al eliminar asignación' });
+  }
+};
+

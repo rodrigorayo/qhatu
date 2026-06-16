@@ -17,33 +17,38 @@ const LocalAssignmentSchema = CollectionSchema(
   name: r'LocalAssignment',
   id: 3377249982102375126,
   properties: {
-    r'assignmentId': PropertySchema(
+    r'assignedAreaIdsJson': PropertySchema(
       id: 0,
+      name: r'assignedAreaIdsJson',
+      type: IsarType.string,
+    ),
+    r'assignmentId': PropertySchema(
+      id: 1,
       name: r'assignmentId',
       type: IsarType.string,
     ),
     r'membersJson': PropertySchema(
-      id: 1,
+      id: 2,
       name: r'membersJson',
       type: IsarType.string,
     ),
     r'roleInStand': PropertySchema(
-      id: 2,
+      id: 3,
       name: r'roleInStand',
       type: IsarType.string,
     ),
     r'standId': PropertySchema(
-      id: 3,
+      id: 4,
       name: r'standId',
       type: IsarType.string,
     ),
     r'standName': PropertySchema(
-      id: 4,
+      id: 5,
       name: r'standName',
       type: IsarType.string,
     ),
     r'standNumber': PropertySchema(
-      id: 5,
+      id: 6,
       name: r'standNumber',
       type: IsarType.string,
     )
@@ -82,6 +87,7 @@ int _localAssignmentEstimateSize(
   Map<Type, List<int>> allOffsets,
 ) {
   var bytesCount = offsets.last;
+  bytesCount += 3 + object.assignedAreaIdsJson.length * 3;
   bytesCount += 3 + object.assignmentId.length * 3;
   bytesCount += 3 + object.membersJson.length * 3;
   bytesCount += 3 + object.roleInStand.length * 3;
@@ -97,12 +103,13 @@ void _localAssignmentSerialize(
   List<int> offsets,
   Map<Type, List<int>> allOffsets,
 ) {
-  writer.writeString(offsets[0], object.assignmentId);
-  writer.writeString(offsets[1], object.membersJson);
-  writer.writeString(offsets[2], object.roleInStand);
-  writer.writeString(offsets[3], object.standId);
-  writer.writeString(offsets[4], object.standName);
-  writer.writeString(offsets[5], object.standNumber);
+  writer.writeString(offsets[0], object.assignedAreaIdsJson);
+  writer.writeString(offsets[1], object.assignmentId);
+  writer.writeString(offsets[2], object.membersJson);
+  writer.writeString(offsets[3], object.roleInStand);
+  writer.writeString(offsets[4], object.standId);
+  writer.writeString(offsets[5], object.standName);
+  writer.writeString(offsets[6], object.standNumber);
 }
 
 LocalAssignment _localAssignmentDeserialize(
@@ -112,13 +119,14 @@ LocalAssignment _localAssignmentDeserialize(
   Map<Type, List<int>> allOffsets,
 ) {
   final object = LocalAssignment();
-  object.assignmentId = reader.readString(offsets[0]);
+  object.assignedAreaIdsJson = reader.readString(offsets[0]);
+  object.assignmentId = reader.readString(offsets[1]);
   object.id = id;
-  object.membersJson = reader.readString(offsets[1]);
-  object.roleInStand = reader.readString(offsets[2]);
-  object.standId = reader.readString(offsets[3]);
-  object.standName = reader.readString(offsets[4]);
-  object.standNumber = reader.readString(offsets[5]);
+  object.membersJson = reader.readString(offsets[2]);
+  object.roleInStand = reader.readString(offsets[3]);
+  object.standId = reader.readString(offsets[4]);
+  object.standName = reader.readString(offsets[5]);
+  object.standNumber = reader.readString(offsets[6]);
   return object;
 }
 
@@ -140,6 +148,8 @@ P _localAssignmentDeserializeProp<P>(
     case 4:
       return (reader.readString(offset)) as P;
     case 5:
+      return (reader.readString(offset)) as P;
+    case 6:
       return (reader.readString(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -343,6 +353,142 @@ extension LocalAssignmentQueryWhere
 
 extension LocalAssignmentQueryFilter
     on QueryBuilder<LocalAssignment, LocalAssignment, QFilterCondition> {
+  QueryBuilder<LocalAssignment, LocalAssignment, QAfterFilterCondition>
+      assignedAreaIdsJsonEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'assignedAreaIdsJson',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalAssignment, LocalAssignment, QAfterFilterCondition>
+      assignedAreaIdsJsonGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'assignedAreaIdsJson',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalAssignment, LocalAssignment, QAfterFilterCondition>
+      assignedAreaIdsJsonLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'assignedAreaIdsJson',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalAssignment, LocalAssignment, QAfterFilterCondition>
+      assignedAreaIdsJsonBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'assignedAreaIdsJson',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalAssignment, LocalAssignment, QAfterFilterCondition>
+      assignedAreaIdsJsonStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'assignedAreaIdsJson',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalAssignment, LocalAssignment, QAfterFilterCondition>
+      assignedAreaIdsJsonEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'assignedAreaIdsJson',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalAssignment, LocalAssignment, QAfterFilterCondition>
+      assignedAreaIdsJsonContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'assignedAreaIdsJson',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalAssignment, LocalAssignment, QAfterFilterCondition>
+      assignedAreaIdsJsonMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'assignedAreaIdsJson',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalAssignment, LocalAssignment, QAfterFilterCondition>
+      assignedAreaIdsJsonIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'assignedAreaIdsJson',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<LocalAssignment, LocalAssignment, QAfterFilterCondition>
+      assignedAreaIdsJsonIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'assignedAreaIdsJson',
+        value: '',
+      ));
+    });
+  }
+
   QueryBuilder<LocalAssignment, LocalAssignment, QAfterFilterCondition>
       assignmentIdEqualTo(
     String value, {
@@ -1225,6 +1371,20 @@ extension LocalAssignmentQueryLinks
 extension LocalAssignmentQuerySortBy
     on QueryBuilder<LocalAssignment, LocalAssignment, QSortBy> {
   QueryBuilder<LocalAssignment, LocalAssignment, QAfterSortBy>
+      sortByAssignedAreaIdsJson() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'assignedAreaIdsJson', Sort.asc);
+    });
+  }
+
+  QueryBuilder<LocalAssignment, LocalAssignment, QAfterSortBy>
+      sortByAssignedAreaIdsJsonDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'assignedAreaIdsJson', Sort.desc);
+    });
+  }
+
+  QueryBuilder<LocalAssignment, LocalAssignment, QAfterSortBy>
       sortByAssignmentId() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'assignmentId', Sort.asc);
@@ -1310,6 +1470,20 @@ extension LocalAssignmentQuerySortBy
 
 extension LocalAssignmentQuerySortThenBy
     on QueryBuilder<LocalAssignment, LocalAssignment, QSortThenBy> {
+  QueryBuilder<LocalAssignment, LocalAssignment, QAfterSortBy>
+      thenByAssignedAreaIdsJson() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'assignedAreaIdsJson', Sort.asc);
+    });
+  }
+
+  QueryBuilder<LocalAssignment, LocalAssignment, QAfterSortBy>
+      thenByAssignedAreaIdsJsonDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'assignedAreaIdsJson', Sort.desc);
+    });
+  }
+
   QueryBuilder<LocalAssignment, LocalAssignment, QAfterSortBy>
       thenByAssignmentId() {
     return QueryBuilder.apply(this, (query) {
@@ -1409,6 +1583,14 @@ extension LocalAssignmentQuerySortThenBy
 extension LocalAssignmentQueryWhereDistinct
     on QueryBuilder<LocalAssignment, LocalAssignment, QDistinct> {
   QueryBuilder<LocalAssignment, LocalAssignment, QDistinct>
+      distinctByAssignedAreaIdsJson({bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'assignedAreaIdsJson',
+          caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<LocalAssignment, LocalAssignment, QDistinct>
       distinctByAssignmentId({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'assignmentId', caseSensitive: caseSensitive);
@@ -1456,6 +1638,13 @@ extension LocalAssignmentQueryProperty
   QueryBuilder<LocalAssignment, int, QQueryOperations> idProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'id');
+    });
+  }
+
+  QueryBuilder<LocalAssignment, String, QQueryOperations>
+      assignedAreaIdsJsonProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'assignedAreaIdsJson');
     });
   }
 
@@ -1531,8 +1720,13 @@ const LocalCriterionSchema = CollectionSchema(
       name: r'maxScore',
       type: IsarType.double,
     ),
-    r'name': PropertySchema(
+    r'minScore': PropertySchema(
       id: 4,
+      name: r'minScore',
+      type: IsarType.double,
+    ),
+    r'name': PropertySchema(
+      id: 5,
       name: r'name',
       type: IsarType.string,
     )
@@ -1588,7 +1782,8 @@ void _localCriterionSerialize(
   writer.writeString(offsets[1], object.areaName);
   writer.writeString(offsets[2], object.criterionId);
   writer.writeDouble(offsets[3], object.maxScore);
-  writer.writeString(offsets[4], object.name);
+  writer.writeDouble(offsets[4], object.minScore);
+  writer.writeString(offsets[5], object.name);
 }
 
 LocalCriterion _localCriterionDeserialize(
@@ -1603,7 +1798,8 @@ LocalCriterion _localCriterionDeserialize(
   object.criterionId = reader.readString(offsets[2]);
   object.id = id;
   object.maxScore = reader.readDouble(offsets[3]);
-  object.name = reader.readString(offsets[4]);
+  object.minScore = reader.readDouble(offsets[4]);
+  object.name = reader.readString(offsets[5]);
   return object;
 }
 
@@ -1623,6 +1819,8 @@ P _localCriterionDeserializeProp<P>(
     case 3:
       return (reader.readDouble(offset)) as P;
     case 4:
+      return (reader.readDouble(offset)) as P;
+    case 5:
       return (reader.readString(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -2357,6 +2555,72 @@ extension LocalCriterionQueryFilter
   }
 
   QueryBuilder<LocalCriterion, LocalCriterion, QAfterFilterCondition>
+      minScoreEqualTo(
+    double value, {
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'minScore',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalCriterion, LocalCriterion, QAfterFilterCondition>
+      minScoreGreaterThan(
+    double value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'minScore',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalCriterion, LocalCriterion, QAfterFilterCondition>
+      minScoreLessThan(
+    double value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'minScore',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalCriterion, LocalCriterion, QAfterFilterCondition>
+      minScoreBetween(
+    double lower,
+    double upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'minScore',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalCriterion, LocalCriterion, QAfterFilterCondition>
       nameEqualTo(
     String value, {
     bool caseSensitive = true,
@@ -2554,6 +2818,19 @@ extension LocalCriterionQuerySortBy
     });
   }
 
+  QueryBuilder<LocalCriterion, LocalCriterion, QAfterSortBy> sortByMinScore() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'minScore', Sort.asc);
+    });
+  }
+
+  QueryBuilder<LocalCriterion, LocalCriterion, QAfterSortBy>
+      sortByMinScoreDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'minScore', Sort.desc);
+    });
+  }
+
   QueryBuilder<LocalCriterion, LocalCriterion, QAfterSortBy> sortByName() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'name', Sort.asc);
@@ -2634,6 +2911,19 @@ extension LocalCriterionQuerySortThenBy
     });
   }
 
+  QueryBuilder<LocalCriterion, LocalCriterion, QAfterSortBy> thenByMinScore() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'minScore', Sort.asc);
+    });
+  }
+
+  QueryBuilder<LocalCriterion, LocalCriterion, QAfterSortBy>
+      thenByMinScoreDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'minScore', Sort.desc);
+    });
+  }
+
   QueryBuilder<LocalCriterion, LocalCriterion, QAfterSortBy> thenByName() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'name', Sort.asc);
@@ -2676,6 +2966,12 @@ extension LocalCriterionQueryWhereDistinct
     });
   }
 
+  QueryBuilder<LocalCriterion, LocalCriterion, QDistinct> distinctByMinScore() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'minScore');
+    });
+  }
+
   QueryBuilder<LocalCriterion, LocalCriterion, QDistinct> distinctByName(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
@@ -2713,6 +3009,12 @@ extension LocalCriterionQueryProperty
   QueryBuilder<LocalCriterion, double, QQueryOperations> maxScoreProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'maxScore');
+    });
+  }
+
+  QueryBuilder<LocalCriterion, double, QQueryOperations> minScoreProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'minScore');
     });
   }
 

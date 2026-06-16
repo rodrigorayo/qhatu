@@ -73,6 +73,7 @@ model Area {
   updatedAt        DateTime @updatedAt
 
   criteria         Criterion[]
+  assignments      Assignment[]
 }
 
 model Criterion {
@@ -124,6 +125,8 @@ model Assignment {
   stand            Stand          @relation(fields: [standId], references: [id], onDelete: Cascade)
   roleInStand      AssignmentRole // Es Jurado o es Delegado para este stand específico
   createdAt        DateTime       @default(now())
+
+  areas            Area[]
 
   @@unique([userId, standId, roleInStand])
 }

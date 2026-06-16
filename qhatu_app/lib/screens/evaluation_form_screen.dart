@@ -52,12 +52,24 @@ class _EvaluationFormScreenState extends State<EvaluationFormScreen> {
   }
 
   Future<void> _loadCriteria() async {
-    final criteria = await _isarService.getCriteria();
+    var criteria = await _isarService.getCriteria();
+    
+    // Si la asignación tiene áreas específicas, filtrar los criterios
+    List<String> assignedAreaIds = [];
+    try {
+      assignedAreaIds = List<String>.from(jsonDecode(widget.assignment.assignedAreaIdsJson));
+    } catch (_) {}
+    
+    if (assignedAreaIds.isNotEmpty) {
+      criteria = criteria.where((c) => assignedAreaIds.contains(c.areaId)).toList();
+    }
+    
     setState(() {
       _criteria = criteria;
       for (var c in criteria) {
-        _scores[c.criterionId] = 0; // Valor por defecto
-        _scoreControllers[c.criterionId] = TextEditingController(text: '0');
+        final defScore = c.minScore;
+        _scores[c.criterionId] = defScore;
+        _scoreControllers[c.criterionId] = TextEditingController(text: defScore.round().toString());
         _showSlider[c.criterionId] = false; // Deslizador oculto por defecto
       }
       _isLoading = false;
@@ -70,12 +82,24 @@ class _EvaluationFormScreenState extends State<EvaluationFormScreen> {
       return;
     }
 
+    // Validar rango de notas
+    for (var criterion in _criteria) {
+      final score = _scores[criterion.criterionId] ?? criterion.minScore;
+      if (score < criterion.minScore || score > criterion.maxScore) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('La nota para "${criterion.name}" debe estar entre ${criterion.minScore.round()} y ${criterion.maxScore.round()}'),
+          backgroundColor: Colors.red,
+        ));
+        return;
+      }
+    }
+
     final targetId = widget.assignment.roleInStand == 'DELEGADO' 
         ? _selectedMemberId! 
         : widget.assignment.standId;
 
     for (var criterion in _criteria) {
-      final score = _scores[criterion.criterionId] ?? 0.0;
+      final score = _scores[criterion.criterionId] ?? criterion.minScore;
       final comment = _comments[criterion.criterionId] ?? '';
 
       final pendingScore = PendingScore()
@@ -160,7 +184,6 @@ class _EvaluationFormScreenState extends State<EvaluationFormScreen> {
                     initiallyExpanded: true,
                     childrenPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     children: criteriaList.map((criterion) {
-                      final maxDivisions = criterion.maxScore.toInt();
                       final sliderEnabled = _showSlider[criterion.criterionId] ?? false;
 
                       return Padding(
@@ -186,7 +209,7 @@ class _EvaluationFormScreenState extends State<EvaluationFormScreen> {
                                       FilteringTextInputFormatter.digitsOnly,
                                     ],
                                     decoration: InputDecoration(
-                                      labelText: 'Nota (máx ${criterion.maxScore.round()})',
+                                      labelText: 'Nota (${criterion.minScore.round()}-${criterion.maxScore.round()})',
                                       border: const OutlineInputBorder(),
                                       isDense: true,
                                       contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
@@ -214,7 +237,7 @@ class _EvaluationFormScreenState extends State<EvaluationFormScreen> {
                                         }
                                       } else {
                                         setState(() {
-                                          _scores[criterion.criterionId] = 0.0;
+                                          _scores[criterion.criterionId] = criterion.minScore;
                                         });
                                       }
                                     },
@@ -246,13 +269,15 @@ class _EvaluationFormScreenState extends State<EvaluationFormScreen> {
                               const SizedBox(height: 12),
                               Row(
                                 children: [
-                                  const Text('0', style: TextStyle(fontWeight: FontWeight.bold)),
+                                  Text(criterion.minScore.round().toString(), style: const TextStyle(fontWeight: FontWeight.bold)),
                                   Expanded(
                                     child: Slider(
-                                      value: _scores[criterion.criterionId] ?? 0.0,
-                                      min: 0,
+                                      value: (_scores[criterion.criterionId] ?? criterion.minScore).clamp(criterion.minScore, criterion.maxScore),
+                                      min: criterion.minScore,
                                       max: criterion.maxScore,
-                                      divisions: maxDivisions > 0 ? maxDivisions : 1,
+                                      divisions: (criterion.maxScore - criterion.minScore).toInt() > 0 
+                                          ? (criterion.maxScore - criterion.minScore).toInt() 
+                                          : 1,
                                       label: _scores[criterion.criterionId]?.round().toString(),
                                       onChanged: (val) {
                                         setState(() {

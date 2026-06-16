@@ -2,7 +2,8 @@ import { Router } from 'express';
 import { getAreas, createArea, deleteArea } from '../controllers/area.controller';
 import { createCriterion, deleteCriterion } from '../controllers/criterion.controller';
 import { getStands, createStand, deleteStand, addMemberToStand, addMembersBatch, updateMember, deleteMember } from '../controllers/stand.controller';
-import { createEvaluatorAndAssign } from '../controllers/assignment.controller';
+import { createEvaluatorAndAssign, getEvaluators, deleteAssignment } from '../controllers/assignment.controller';
+import { getResults } from '../controllers/evaluation.controller';
 import { authenticateToken, requireRole } from '../middlewares/auth.middleware';
 
 const router = Router();
@@ -30,6 +31,11 @@ router.put('/members/:id', updateMember);
 router.delete('/members/:id', deleteMember);
 
 // --- Rutas de Asignaciones (Jurados) ---
+router.get('/evaluators', getEvaluators);
 router.post('/assignments', createEvaluatorAndAssign);
+router.delete('/assignments/:id', deleteAssignment);
+
+// --- Rutas de Resultados ---
+router.get('/results', getResults);
 
 export default router;

@@ -91,6 +91,7 @@ class _ManageAreasScreenState extends State<ManageAreasScreen> {
 
   void _showAddCriterionDialog(String areaId) {
     final nameController = TextEditingController();
+    final minController = TextEditingController(text: '0');
     final maxController = TextEditingController(text: '100');
     
     showDialog(
@@ -101,6 +102,12 @@ class _ManageAreasScreenState extends State<ManageAreasScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(controller: nameController, decoration: const InputDecoration(labelText: 'Criterio (ej. Fluidez verbal)')),
+            TextField(
+              controller: minController, 
+              decoration: const InputDecoration(labelText: 'Puntaje Mínimo'), 
+              keyboardType: TextInputType.number,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            ),
             TextField(
               controller: maxController, 
               decoration: const InputDecoration(labelText: 'Puntaje Máximo'), 
@@ -114,8 +121,16 @@ class _ManageAreasScreenState extends State<ManageAreasScreen> {
           FilledButton(
             onPressed: () async {
               if (nameController.text.trim().isEmpty) return;
+              final minVal = double.tryParse(minController.text.trim()) ?? 0.0;
+              final maxVal = double.tryParse(maxController.text.trim()) ?? 100.0;
+              if (maxVal <= minVal) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('El puntaje máximo debe ser mayor al mínimo')),
+                );
+                return;
+              }
               Navigator.pop(context);
-              await _createCriterion(areaId, nameController.text.trim(), double.parse(maxController.text.trim()));
+              await _createCriterion(areaId, nameController.text.trim(), minVal, maxVal);
             },
             child: const Text('Añadir'),
           ),
@@ -124,7 +139,7 @@ class _ManageAreasScreenState extends State<ManageAreasScreen> {
     );
   }
 
-  Future<void> _createCriterion(String areaId, String name, double maxScore) async {
+  Future<void> _createCriterion(String areaId, String name, double minScore, double maxScore) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('token');
@@ -132,7 +147,7 @@ class _ManageAreasScreenState extends State<ManageAreasScreen> {
       final response = await http.post(
         Uri.parse('${Config.baseUrl}/api/management/criteria'),
         headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer $token'},
-        body: jsonEncode({'areaId': areaId, 'name': name, 'minScore': 0, 'maxScore': maxScore}),
+        body: jsonEncode({'areaId': areaId, 'name': name, 'minScore': minScore, 'maxScore': maxScore}),
       );
 
       if (response.statusCode == 201) {
@@ -172,7 +187,7 @@ class _ManageAreasScreenState extends State<ManageAreasScreen> {
                           ...criteria.map((c) => ListTile(
                                 leading: const Icon(Icons.check_circle_outline, color: Colors.green),
                                 title: Text(c['name']),
-                                trailing: Text('Máx: ${c['maxScore']} pts', style: const TextStyle(fontWeight: FontWeight.bold)),
+                                trailing: Text('Rango: ${(c['minScore'] ?? 0).round()}-${c['maxScore'].round()} pts', style: const TextStyle(fontWeight: FontWeight.bold)),
                               )),
                           Padding(
                             padding: const EdgeInsets.all(8.0),

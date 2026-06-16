@@ -27,13 +27,16 @@ class IsarService {
     final isar = await db;
     final newAssignments = assignmentsData.map((data) {
       final stand = data['stand'];
+      final areas = data['areas'] as List<dynamic>? ?? [];
+      final areaIds = areas.map((a) => a['id'].toString()).toList();
       return LocalAssignment()
         ..assignmentId = data['id']
         ..standId = stand['id']
         ..standName = stand['name']
         ..standNumber = stand['number']
         ..roleInStand = data['roleInStand']
-        ..membersJson = jsonEncode(stand['members']);
+        ..membersJson = jsonEncode(stand['members'])
+        ..assignedAreaIdsJson = jsonEncode(areaIds);
     }).toList();
 
     await isar.writeTxn(() async {
@@ -80,6 +83,7 @@ class IsarService {
             ..areaId = area['id']
             ..areaName = area['name']
             ..name = c['name']
+            ..minScore = (c['minScore'] as num?)?.toDouble() ?? 0.0
             ..maxScore = (c['maxScore'] as num).toDouble()
         );
       }

@@ -16,6 +16,8 @@ class LocalAssignment {
 
   // Lista de miembros codificada en JSON para el modo offline
   String membersJson = '[]'; 
+
+  String assignedAreaIdsJson = '[]'; // IDs de las áreas asignadas (vacío = todas)
 }
 
 @collection
@@ -28,6 +30,7 @@ class LocalCriterion {
   late String areaId;
   late String areaName;
   late String name;
+  late double minScore;
   late double maxScore;
 }
 

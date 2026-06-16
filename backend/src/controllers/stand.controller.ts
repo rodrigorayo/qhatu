@@ -9,7 +9,15 @@ export const getStands = async (req: AuthRequest, res: Response): Promise<any> =
 
     const stands = await prisma.stand.findMany({
       where: { feriaId },
-      include: { members: true },
+      include: { 
+        members: true,
+        assignments: {
+          include: {
+            user: true,
+            areas: true
+          }
+        }
+      },
       orderBy: { createdAt: 'asc' }
     });
 
