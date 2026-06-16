@@ -29,6 +29,7 @@ subprojects {
             val android = prj.extensions.findByName("android")
             if (android != null) {
                 try {
+                    // 1. Configurar namespace si es nulo
                     val getNamespace = android.javaClass.getMethod("getNamespace")
                     val setNamespace = android.javaClass.getMethod("setNamespace", String::class.java)
                     if (getNamespace.invoke(android) == null) {
@@ -42,6 +43,21 @@ subprojects {
                     }
                 } catch (e: Exception) {
                     // Ignorar
+                }
+
+                try {
+                    // 2. Forzar compileSdkVersion a 34 para evitar incompatibilidad de metadatos AAR
+                    val setCompileSdkVersion = android.javaClass.getMethod("setCompileSdkVersion", Int::class.javaPrimitiveType)
+                    setCompileSdkVersion.invoke(android, 34)
+                    logger.quiet("Auto-configured compileSdkVersion to 34 for subproject: ${prj.name}")
+                } catch (e: Exception) {
+                    try {
+                        val setCompileSdkVersionInt = android.javaClass.getMethod("setCompileSdkVersion", Integer::class.java)
+                        setCompileSdkVersionInt.invoke(android, 34)
+                        logger.quiet("Auto-configured compileSdkVersion (Integer) to 34 for subproject: ${prj.name}")
+                    } catch (e2: Exception) {
+                        // Ignorar
+                    }
                 }
             }
         }
