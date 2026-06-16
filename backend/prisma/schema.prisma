@@ -83,6 +83,7 @@ model Criterion {
   name             String
   minScore         Float    // Ej: 1
   maxScore         Float    // Ej: 45
+  weight           Float    @default(10.0)
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 

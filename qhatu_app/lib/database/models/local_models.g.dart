@@ -27,28 +27,33 @@ const LocalAssignmentSchema = CollectionSchema(
       name: r'assignmentId',
       type: IsarType.string,
     ),
-    r'membersJson': PropertySchema(
+    r'isEvaluated': PropertySchema(
       id: 2,
+      name: r'isEvaluated',
+      type: IsarType.bool,
+    ),
+    r'membersJson': PropertySchema(
+      id: 3,
       name: r'membersJson',
       type: IsarType.string,
     ),
     r'roleInStand': PropertySchema(
-      id: 3,
+      id: 4,
       name: r'roleInStand',
       type: IsarType.string,
     ),
     r'standId': PropertySchema(
-      id: 4,
+      id: 5,
       name: r'standId',
       type: IsarType.string,
     ),
     r'standName': PropertySchema(
-      id: 5,
+      id: 6,
       name: r'standName',
       type: IsarType.string,
     ),
     r'standNumber': PropertySchema(
-      id: 6,
+      id: 7,
       name: r'standNumber',
       type: IsarType.string,
     )
@@ -105,11 +110,12 @@ void _localAssignmentSerialize(
 ) {
   writer.writeString(offsets[0], object.assignedAreaIdsJson);
   writer.writeString(offsets[1], object.assignmentId);
-  writer.writeString(offsets[2], object.membersJson);
-  writer.writeString(offsets[3], object.roleInStand);
-  writer.writeString(offsets[4], object.standId);
-  writer.writeString(offsets[5], object.standName);
-  writer.writeString(offsets[6], object.standNumber);
+  writer.writeBool(offsets[2], object.isEvaluated);
+  writer.writeString(offsets[3], object.membersJson);
+  writer.writeString(offsets[4], object.roleInStand);
+  writer.writeString(offsets[5], object.standId);
+  writer.writeString(offsets[6], object.standName);
+  writer.writeString(offsets[7], object.standNumber);
 }
 
 LocalAssignment _localAssignmentDeserialize(
@@ -122,11 +128,12 @@ LocalAssignment _localAssignmentDeserialize(
   object.assignedAreaIdsJson = reader.readString(offsets[0]);
   object.assignmentId = reader.readString(offsets[1]);
   object.id = id;
-  object.membersJson = reader.readString(offsets[2]);
-  object.roleInStand = reader.readString(offsets[3]);
-  object.standId = reader.readString(offsets[4]);
-  object.standName = reader.readString(offsets[5]);
-  object.standNumber = reader.readString(offsets[6]);
+  object.isEvaluated = reader.readBool(offsets[2]);
+  object.membersJson = reader.readString(offsets[3]);
+  object.roleInStand = reader.readString(offsets[4]);
+  object.standId = reader.readString(offsets[5]);
+  object.standName = reader.readString(offsets[6]);
+  object.standNumber = reader.readString(offsets[7]);
   return object;
 }
 
@@ -142,7 +149,7 @@ P _localAssignmentDeserializeProp<P>(
     case 1:
       return (reader.readString(offset)) as P;
     case 2:
-      return (reader.readString(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 3:
       return (reader.readString(offset)) as P;
     case 4:
@@ -150,6 +157,8 @@ P _localAssignmentDeserializeProp<P>(
     case 5:
       return (reader.readString(offset)) as P;
     case 6:
+      return (reader.readString(offset)) as P;
+    case 7:
       return (reader.readString(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -677,6 +686,16 @@ extension LocalAssignmentQueryFilter
         includeLower: includeLower,
         upper: upper,
         includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalAssignment, LocalAssignment, QAfterFilterCondition>
+      isEvaluatedEqualTo(bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'isEvaluated',
+        value: value,
       ));
     });
   }
@@ -1399,6 +1418,20 @@ extension LocalAssignmentQuerySortBy
   }
 
   QueryBuilder<LocalAssignment, LocalAssignment, QAfterSortBy>
+      sortByIsEvaluated() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isEvaluated', Sort.asc);
+    });
+  }
+
+  QueryBuilder<LocalAssignment, LocalAssignment, QAfterSortBy>
+      sortByIsEvaluatedDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isEvaluated', Sort.desc);
+    });
+  }
+
+  QueryBuilder<LocalAssignment, LocalAssignment, QAfterSortBy>
       sortByMembersJson() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'membersJson', Sort.asc);
@@ -1511,6 +1544,20 @@ extension LocalAssignmentQuerySortThenBy
   }
 
   QueryBuilder<LocalAssignment, LocalAssignment, QAfterSortBy>
+      thenByIsEvaluated() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isEvaluated', Sort.asc);
+    });
+  }
+
+  QueryBuilder<LocalAssignment, LocalAssignment, QAfterSortBy>
+      thenByIsEvaluatedDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isEvaluated', Sort.desc);
+    });
+  }
+
+  QueryBuilder<LocalAssignment, LocalAssignment, QAfterSortBy>
       thenByMembersJson() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'membersJson', Sort.asc);
@@ -1598,6 +1645,13 @@ extension LocalAssignmentQueryWhereDistinct
   }
 
   QueryBuilder<LocalAssignment, LocalAssignment, QDistinct>
+      distinctByIsEvaluated() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'isEvaluated');
+    });
+  }
+
+  QueryBuilder<LocalAssignment, LocalAssignment, QDistinct>
       distinctByMembersJson({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'membersJson', caseSensitive: caseSensitive);
@@ -1652,6 +1706,12 @@ extension LocalAssignmentQueryProperty
       assignmentIdProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'assignmentId');
+    });
+  }
+
+  QueryBuilder<LocalAssignment, bool, QQueryOperations> isEvaluatedProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'isEvaluated');
     });
   }
 
@@ -1729,6 +1789,11 @@ const LocalCriterionSchema = CollectionSchema(
       id: 5,
       name: r'name',
       type: IsarType.string,
+    ),
+    r'weight': PropertySchema(
+      id: 6,
+      name: r'weight',
+      type: IsarType.double,
     )
   },
   estimateSize: _localCriterionEstimateSize,
@@ -1784,6 +1849,7 @@ void _localCriterionSerialize(
   writer.writeDouble(offsets[3], object.maxScore);
   writer.writeDouble(offsets[4], object.minScore);
   writer.writeString(offsets[5], object.name);
+  writer.writeDouble(offsets[6], object.weight);
 }
 
 LocalCriterion _localCriterionDeserialize(
@@ -1800,6 +1866,7 @@ LocalCriterion _localCriterionDeserialize(
   object.maxScore = reader.readDouble(offsets[3]);
   object.minScore = reader.readDouble(offsets[4]);
   object.name = reader.readString(offsets[5]);
+  object.weight = reader.readDouble(offsets[6]);
   return object;
 }
 
@@ -1822,6 +1889,8 @@ P _localCriterionDeserializeProp<P>(
       return (reader.readDouble(offset)) as P;
     case 5:
       return (reader.readString(offset)) as P;
+    case 6:
+      return (reader.readDouble(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
   }
@@ -2755,6 +2824,72 @@ extension LocalCriterionQueryFilter
       ));
     });
   }
+
+  QueryBuilder<LocalCriterion, LocalCriterion, QAfterFilterCondition>
+      weightEqualTo(
+    double value, {
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'weight',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalCriterion, LocalCriterion, QAfterFilterCondition>
+      weightGreaterThan(
+    double value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'weight',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalCriterion, LocalCriterion, QAfterFilterCondition>
+      weightLessThan(
+    double value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'weight',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalCriterion, LocalCriterion, QAfterFilterCondition>
+      weightBetween(
+    double lower,
+    double upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'weight',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        epsilon: epsilon,
+      ));
+    });
+  }
 }
 
 extension LocalCriterionQueryObject
@@ -2840,6 +2975,19 @@ extension LocalCriterionQuerySortBy
   QueryBuilder<LocalCriterion, LocalCriterion, QAfterSortBy> sortByNameDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'name', Sort.desc);
+    });
+  }
+
+  QueryBuilder<LocalCriterion, LocalCriterion, QAfterSortBy> sortByWeight() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'weight', Sort.asc);
+    });
+  }
+
+  QueryBuilder<LocalCriterion, LocalCriterion, QAfterSortBy>
+      sortByWeightDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'weight', Sort.desc);
     });
   }
 }
@@ -2935,6 +3083,19 @@ extension LocalCriterionQuerySortThenBy
       return query.addSortBy(r'name', Sort.desc);
     });
   }
+
+  QueryBuilder<LocalCriterion, LocalCriterion, QAfterSortBy> thenByWeight() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'weight', Sort.asc);
+    });
+  }
+
+  QueryBuilder<LocalCriterion, LocalCriterion, QAfterSortBy>
+      thenByWeightDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'weight', Sort.desc);
+    });
+  }
 }
 
 extension LocalCriterionQueryWhereDistinct
@@ -2976,6 +3137,12 @@ extension LocalCriterionQueryWhereDistinct
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'name', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<LocalCriterion, LocalCriterion, QDistinct> distinctByWeight() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'weight');
     });
   }
 }
@@ -3021,6 +3188,12 @@ extension LocalCriterionQueryProperty
   QueryBuilder<LocalCriterion, String, QQueryOperations> nameProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'name');
+    });
+  }
+
+  QueryBuilder<LocalCriterion, double, QQueryOperations> weightProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'weight');
     });
   }
 }

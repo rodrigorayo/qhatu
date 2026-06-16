@@ -18,6 +18,7 @@ class EvaluatorDashboard extends StatefulWidget {
 class _EvaluatorDashboardState extends State<EvaluatorDashboard> {
   final IsarService _isarService = IsarService();
   List<LocalAssignment> _assignments = [];
+  List<PendingScore> _pendingScores = [];
   bool _isSyncing = false;
   bool _isOffline = false;
   Timer? _offlineCheckTimer;
@@ -63,8 +64,10 @@ class _EvaluatorDashboardState extends State<EvaluatorDashboard> {
 
   Future<void> _loadLocalData() async {
     final assignments = await _isarService.getAssignments();
+    final pending = await _isarService.getPendingScores();
     setState(() {
       _assignments = assignments;
+      _pendingScores = pending;
     });
   }
 
@@ -208,19 +211,61 @@ class _EvaluatorDashboardState extends State<EvaluatorDashboard> {
               itemCount: _assignments.length,
               itemBuilder: (context, index) {
                 final assignment = _assignments[index];
+                
+                // Determinar si ya está calificado (online u offline)
+                final isPendingGraded = assignment.roleInStand == 'JURADO'
+                    ? _pendingScores.any((s) => s.targetId == assignment.standId && !s.isMemberScore)
+                    : _pendingScores.any((s) => (jsonDecode(assignment.membersJson) as List).map((m) => m['id'].toString()).contains(s.targetId) && s.isMemberScore);
+                
+                final isGraded = assignment.isEvaluated || isPendingGraded;
+
                 return Card(
                   margin: const EdgeInsets.only(bottom: 16),
                   child: ListTile(
                     contentPadding: const EdgeInsets.all(16),
                     leading: CircleAvatar(
-                      backgroundColor: assignment.roleInStand == 'JURADO' ? Colors.blue : Colors.purple,
-                      child: Icon(assignment.roleInStand == 'JURADO' ? Icons.storefront : Icons.person),
+                      backgroundColor: isGraded 
+                        ? Colors.green 
+                        : (assignment.roleInStand == 'JURADO' ? Colors.blue : Colors.purple),
+                      child: Icon(isGraded 
+                        ? Icons.check_circle_outline 
+                        : (assignment.roleInStand == 'JURADO' ? Icons.storefront : Icons.person)),
                     ),
                     title: Text(assignment.standName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-                    subtitle: Text('ID: ${assignment.standNumber}\nRol: ${assignment.roleInStand}'),
-                    trailing: const Icon(Icons.arrow_forward_ios),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('ID: ${assignment.standNumber}\nRol: ${assignment.roleInStand}'),
+                        if (isGraded) ...[
+                          const SizedBox(height: 4),
+                          const Text(
+                            '✓ Ya Calificado',
+                            style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 13),
+                          ),
+                        ]
+                      ],
+                    ),
+                    trailing: Icon(
+                      isGraded ? Icons.check_circle : Icons.arrow_forward_ios,
+                      color: isGraded ? Colors.green : Colors.grey,
+                    ),
                     isThreeLine: true,
                     onTap: () async {
+                      if (isGraded) {
+                        final confirm = await showDialog<bool>(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: const Text('Proyecto Calificado'),
+                            content: const Text('Ya has calificado este stand. ¿Deseas modificar la calificación?'),
+                            actions: [
+                              TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('No')),
+                              FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Sí, modificar')),
+                            ],
+                          ),
+                        );
+                        if (confirm != true) return;
+                      }
+                      if (!context.mounted) return;
                       await context.push('/evaluator/form', extra: assignment);
                       _syncData(showFeedback: false); // Sincronizar automáticamente al volver
                     },

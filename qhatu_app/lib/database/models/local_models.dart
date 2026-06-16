@@ -18,6 +18,7 @@ class LocalAssignment {
   String membersJson = '[]'; 
 
   String assignedAreaIdsJson = '[]'; // IDs de las áreas asignadas (vacío = todas)
+  bool isEvaluated = false;
 }
 
 @collection
@@ -32,6 +33,7 @@ class LocalCriterion {
   late String name;
   double minScore = 0.0;
   double maxScore = 100.0;
+  double weight = 10.0;
 }
 
 @collection

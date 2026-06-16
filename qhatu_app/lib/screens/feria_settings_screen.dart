@@ -22,6 +22,7 @@ class _FeriaSettingsScreenState extends State<FeriaSettingsScreen> {
   late TextEditingController _locationCtrl;
   
   String? _selectedType;
+  String? _selectedCalculationType;
   DateTimeRange? _dateRange;
   bool _isLoading = false;
 
@@ -47,6 +48,8 @@ class _FeriaSettingsScreenState extends State<FeriaSettingsScreen> {
     if (metadata['type'] != null && _feriaTypes.contains(metadata['type'])) {
       _selectedType = metadata['type'];
     }
+
+    _selectedCalculationType = widget.initialData?['calculationType'] ?? 'SUMATIVE';
 
     if (widget.initialData?['startDate'] != null && widget.initialData?['endDate'] != null) {
       _dateRange = DateTimeRange(
@@ -112,6 +115,7 @@ class _FeriaSettingsScreenState extends State<FeriaSettingsScreen> {
           'description': _descCtrl.text.trim(),
           'startDate': _dateRange?.start.toIso8601String(),
           'endDate': _dateRange?.end.toIso8601String(),
+          'calculationType': _selectedCalculationType,
           'metadata': metadata,
         }),
       );
@@ -183,6 +187,22 @@ class _FeriaSettingsScreenState extends State<FeriaSettingsScreen> {
                     items: _feriaTypes.map((t) => DropdownMenuItem(value: t, child: Text(t))).toList(),
                     onChanged: (val) => setState(() => _selectedType = val),
                     validator: (val) => val == null ? 'Selecciona un rubro' : null,
+                  ),
+                  const SizedBox(height: 16),
+                  DropdownButtonFormField<String>(
+                    value: _selectedCalculationType,
+                    decoration: InputDecoration(
+                      labelText: 'Método de Calificación *',
+                      prefixIcon: const Icon(Icons.calculate),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                      filled: true,
+                    ),
+                    items: const [
+                      DropdownMenuItem(value: 'SUMATIVE', child: Text('Suma de Puntos (Sumativo)')),
+                      DropdownMenuItem(value: 'WEIGHTED', child: Text('Ponderado por Áreas (%)')),
+                    ],
+                    onChanged: (val) => setState(() => _selectedCalculationType = val),
+                    validator: (val) => val == null ? 'Selecciona un método' : null,
                   ),
                   const SizedBox(height: 16),
                   

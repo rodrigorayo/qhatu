@@ -106,7 +106,7 @@ export const updateMyFeria = async (req: AuthRequest, res: Response): Promise<an
     const userFeriaId = req.user?.feriaId;
     if (!userFeriaId) return res.status(403).json({ error: 'No tienes una feria asignada' });
 
-    const { name, description, startDate, endDate, metadata } = req.body;
+    const { name, description, startDate, endDate, calculationType, metadata } = req.body;
 
     const updatedFeria = await prisma.feria.update({
       where: { id: userFeriaId },
@@ -115,6 +115,7 @@ export const updateMyFeria = async (req: AuthRequest, res: Response): Promise<an
         description,
         startDate: startDate ? new Date(startDate) : null,
         endDate: endDate ? new Date(endDate) : null,
+        calculationType: calculationType ? calculationType : undefined,
         metadata: metadata ? metadata : undefined,
       }
     });

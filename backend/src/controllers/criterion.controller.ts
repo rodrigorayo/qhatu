@@ -5,7 +5,7 @@ import { AuthRequest } from '../middlewares/auth.middleware';
 export const createCriterion = async (req: AuthRequest, res: Response): Promise<any> => {
   try {
     const feriaId = req.user?.feriaId;
-    const { areaId, name, minScore, maxScore } = req.body;
+    const { areaId, name, minScore, maxScore, weight } = req.body;
 
     // Verificar que el área pertenece a la feria del administrador
     const area = await prisma.area.findUnique({ where: { id: areaId } });
@@ -18,6 +18,7 @@ export const createCriterion = async (req: AuthRequest, res: Response): Promise<
         name,
         minScore: parseFloat(minScore.toString()),
         maxScore: parseFloat(maxScore.toString()),
+        weight: weight ? parseFloat(weight.toString()) : 10.0,
         areaId
       }
     });

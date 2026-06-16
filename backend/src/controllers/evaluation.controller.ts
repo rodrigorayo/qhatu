@@ -20,7 +20,56 @@ export const getMyAssignments = async (req: AuthRequest, res: Response): Promise
       }
     });
 
-    res.json(assignments);
+    const result = [];
+    for (const assignment of assignments) {
+      // Obtener criterios asignados para contar el total esperado
+      const assignedAreas = assignment.areas;
+      const targetCriteriaIds = assignedAreas.length > 0
+        ? assignedAreas.flatMap(a => a.criteria.map(c => c.id))
+        : (await prisma.area.findMany({
+            where: { feriaId: req.user?.feriaId },
+            include: { criteria: true }
+          })).flatMap(a => a.criteria.map(c => c.id));
+
+      let isEvaluated = false;
+      if (assignment.roleInStand === 'JURADO') {
+        const count = await prisma.evaluationStand.count({
+          where: {
+            standId: assignment.standId,
+            juradoId: userId,
+            criterionId: { in: targetCriteriaIds }
+          }
+        });
+        isEvaluated = count >= targetCriteriaIds.length && targetCriteriaIds.length > 0;
+      } else {
+        // DELEGADO
+        const members = assignment.stand.members;
+        if (members.length > 0) {
+          let allMembersEvaluated = true;
+          for (const member of members) {
+            const count = await prisma.evaluationMember.count({
+              where: {
+                memberId: member.id,
+                delegadoId: userId,
+                criterionId: { in: targetCriteriaIds }
+              }
+            });
+            if (count < targetCriteriaIds.length) {
+              allMembersEvaluated = false;
+              break;
+            }
+          }
+          isEvaluated = allMembersEvaluated && targetCriteriaIds.length > 0;
+        }
+      }
+
+      result.push({
+        ...assignment,
+        isEvaluated
+      });
+    }
+
+    res.json(result);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Error al obtener asignaciones' });
@@ -191,7 +240,53 @@ export const getResults = async (req: AuthRequest, res: Response): Promise<any> 
           // Calcular puntaje total del jurado
           let totalScore = 0;
           if (completedCount > 0) {
-            totalScore = myEvals.reduce((sum, e) => sum + e.rawScore, 0);
+            if (feria.calculationType === 'WEIGHTED') {
+              let weightedSum = 0;
+              let totalWeightPct = 0;
+
+              for (const area of areas) {
+                const areaCriteria = area.criteria.filter(c => targetCriteriaIds.includes(c.id));
+                if (areaCriteria.length === 0) continue;
+
+                const areaEvals = myEvals.filter(e => areaCriteria.some(c => c.id === e.criterionId));
+                
+                const areaEarned = areaEvals.reduce((sum, e) => {
+                  const crit = areaCriteria.find(c => c.id === e.criterionId);
+                  if (crit) {
+                    const min = crit.minScore;
+                    const max = crit.maxScore;
+                    const weight = (crit as any).weight ?? 10.0;
+                    if (max <= min) return sum;
+                    const val = (e.rawScore - min) / (max - min);
+                    return sum + Math.max(0, Math.min(1, val)) * weight;
+                  }
+                  return sum;
+                }, 0);
+
+                const areaMaxWeight = areaCriteria.reduce((sum, c) => sum + ((c as any).weight ?? 10.0), 0);
+                const areaPercentage = areaMaxWeight > 0 ? (areaEarned / areaMaxWeight) * 100 : 0;
+                const areaWeightPct = area.weightPercentage ?? 0;
+
+                weightedSum += (areaPercentage * areaWeightPct) / 100;
+                totalWeightPct += areaWeightPct;
+              }
+
+              totalScore = totalWeightPct > 0 ? (weightedSum / totalWeightPct) * 100 : 0;
+            } else {
+              // Sumativa
+              totalScore = myEvals.reduce((sum, e) => {
+                const crit = areas.flatMap(a => a.criteria).find(c => c.id === e.criterionId);
+                if (crit) {
+                  const min = crit.minScore;
+                  const max = crit.maxScore;
+                  const weight = (crit as any).weight ?? 10.0;
+                  if (max <= min) return sum;
+                  const val = (e.rawScore - min) / (max - min);
+                  return sum + Math.max(0, Math.min(1, val)) * weight;
+                }
+                return sum;
+              }, 0);
+            }
           }
 
           return {
@@ -223,7 +318,53 @@ export const getResults = async (req: AuthRequest, res: Response): Promise<any> 
 
             let totalScore = 0;
             if (completedCount > 0) {
-              totalScore = memberEvaluations.reduce((sum, e) => sum + e.rawScore, 0);
+              if (feria.calculationType === 'WEIGHTED') {
+                let weightedSum = 0;
+                let totalWeightPct = 0;
+
+                for (const area of areas) {
+                  const areaCriteria = area.criteria.filter(c => targetCriteriaIds.includes(c.id));
+                  if (areaCriteria.length === 0) continue;
+
+                  const areaEvals = memberEvaluations.filter(e => areaCriteria.some(c => c.id === e.criterionId));
+                  
+                  const areaEarned = areaEvals.reduce((sum, e) => {
+                    const crit = areaCriteria.find(c => c.id === e.criterionId);
+                    if (crit) {
+                      const min = crit.minScore;
+                      const max = crit.maxScore;
+                      const weight = (crit as any).weight ?? 10.0;
+                      if (max <= min) return sum;
+                      const val = (e.rawScore - min) / (max - min);
+                      return sum + Math.max(0, Math.min(1, val)) * weight;
+                    }
+                    return sum;
+                  }, 0);
+
+                  const areaMaxWeight = areaCriteria.reduce((sum, c) => sum + ((c as any).weight ?? 10.0), 0);
+                  const areaPercentage = areaMaxWeight > 0 ? (areaEarned / areaMaxWeight) * 100 : 0;
+                  const areaWeightPct = area.weightPercentage ?? 0;
+
+                  weightedSum += (areaPercentage * areaWeightPct) / 100;
+                  totalWeightPct += areaWeightPct;
+                }
+
+                totalScore = totalWeightPct > 0 ? (weightedSum / totalWeightPct) * 100 : 0;
+              } else {
+                // Sumativa
+                totalScore = memberEvaluations.reduce((sum, e) => {
+                  const crit = areas.flatMap(a => a.criteria).find(c => c.id === e.criterionId);
+                  if (crit) {
+                    const min = crit.minScore;
+                    const max = crit.maxScore;
+                    const weight = (crit as any).weight ?? 10.0;
+                    if (max <= min) return sum;
+                    const val = (e.rawScore - min) / (max - min);
+                    return sum + Math.max(0, Math.min(1, val)) * weight;
+                  }
+                  return sum;
+                }, 0);
+              }
             }
 
             return {

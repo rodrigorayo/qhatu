@@ -36,7 +36,8 @@ class IsarService {
         ..standNumber = stand['number']
         ..roleInStand = data['roleInStand']
         ..membersJson = jsonEncode(stand['members'])
-        ..assignedAreaIdsJson = jsonEncode(areaIds);
+        ..assignedAreaIdsJson = jsonEncode(areaIds)
+        ..isEvaluated = data['isEvaluated'] ?? false;
     }).toList();
 
     await isar.writeTxn(() async {
@@ -85,6 +86,7 @@ class IsarService {
             ..name = c['name']
             ..minScore = (c['minScore'] as num?)?.toDouble() ?? 0.0
             ..maxScore = (c['maxScore'] as num).toDouble()
+            ..weight = (c['weight'] as num?)?.toDouble() ?? 10.0
         );
       }
     }

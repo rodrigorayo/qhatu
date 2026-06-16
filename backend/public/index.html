@@ -559,6 +559,7 @@
         <li class="nav-item" id="menu-stands"><a onclick="switchTab('stands')"><i data-lucide="store"></i> Stands y Proyectos</a></li>
         <li class="nav-item" id="menu-evaluators"><a onclick="switchTab('evaluators')"><i data-lucide="users"></i> Jurados y Asignación</a></li>
         <li class="nav-item" id="menu-results"><a onclick="switchTab('results')"><i data-lucide="bar-chart-3"></i> Resultados Feria</a></li>
+        <li class="nav-item" id="menu-settings"><a onclick="switchTab('settings')"><i data-lucide="settings"></i> Ajustes de Feria</a></li>
       </ul>
 
       <div class="sidebar-footer">
@@ -601,7 +602,14 @@
                   <input type="text" id="new-area-name" placeholder="Ej: Innovación, SER, SABER" required>
                 </div>
               </div>
-              <button type="submit" class="btn">Crear Área</button>
+              <div class="form-group" style="margin-top: 12px;">
+                <label>Peso de Área % (Opcional, ej: 30)</label>
+                <div class="input-wrapper">
+                  <i data-lucide="percent"></i>
+                  <input type="number" id="new-area-weight" placeholder="Ej: 30" min="0" max="100">
+                </div>
+              </div>
+              <button type="submit" class="btn" style="margin-top: 16px;">Crear Área</button>
             </form>
           </div>
 
@@ -625,7 +633,7 @@
                   <input type="text" id="new-crit-name" placeholder="Ej: Creatividad, Originalidad" required>
                 </div>
               </div>
-              <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 0;">
+              <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
                 <div class="form-group">
                   <label>Nota Mínima</label>
                   <div class="input-wrapper">
@@ -639,6 +647,13 @@
                     <i data-lucide="plus"></i>
                     <input type="number" id="new-crit-max" value="100" required>
                   </div>
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Peso / Valor Real en Nota Final</label>
+                <div class="input-wrapper">
+                  <i data-lucide="scale"></i>
+                  <input type="number" id="new-crit-weight" value="10" step="any" required>
                 </div>
               </div>
               <button type="submit" class="btn" style="margin-top: 16px;">Crear Criterio</button>
@@ -867,6 +882,56 @@
           </div>
         </div>
       </section>
+
+      <!-- TAB 5: AJUSTES DE LA FERIA -->
+      <section class="tab-pane" id="tab-settings">
+        <div class="card" style="max-width: 600px; margin: 0 auto;">
+          <h3><i data-lucide="settings"></i> Ajustes de la Feria</h3>
+          <form id="feria-settings-form">
+            <div class="form-group">
+              <label>Nombre de la Feria</label>
+              <div class="input-wrapper">
+                <i data-lucide="festival"></i>
+                <input type="text" id="setting-feria-name" required>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Descripción / Lema</label>
+              <div class="input-wrapper">
+                <i data-lucide="file-text"></i>
+                <textarea id="setting-feria-desc" rows="3" style="width: 100%; padding: 12px; border-radius: 12px; border: 1.5px solid var(--border); background: var(--surface); color: var(--text); font-family: inherit; resize: vertical; box-sizing: border-box;"></textarea>
+              </div>
+            </div>
+            <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+              <div class="form-group">
+                <label>Fecha de Inicio</label>
+                <div class="input-wrapper">
+                  <i data-lucide="calendar"></i>
+                  <input type="date" id="setting-feria-start">
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Fecha de Fin</label>
+                <div class="input-wrapper">
+                  <i data-lucide="calendar"></i>
+                  <input type="date" id="setting-feria-end">
+                </div>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Método de Calificación</label>
+              <div class="input-wrapper">
+                <i data-lucide="calculator" style="z-index: 10;"></i>
+                <select id="setting-feria-calculation" style="padding-left: 44px;" required>
+                  <option value="SUMATIVE">Suma de Puntos (Sumativo)</option>
+                  <option value="WEIGHTED">Ponderado por Áreas (%)</option>
+                </select>
+              </div>
+            </div>
+            <button type="submit" class="btn" style="margin-top: 16px;">Guardar Ajustes</button>
+          </form>
+        </div>
+      </section>
     </main>
   </div>
 
@@ -968,13 +1033,15 @@
         'rubrics': 'Configuración de Rúbricas',
         'stands': 'Stands y Proyectos',
         'evaluators': 'Jurados y Asignación',
-        'results': 'Resultados de Evaluación'
+        'results': 'Resultados de Evaluación',
+        'settings': 'Ajustes de la Feria'
       };
       const subs = {
         'rubrics': 'Gestiona las áreas de evaluación y los criterios correspondientes.',
         'stands': 'Configura y visualiza stands escolares, además de carga de Sheets.',
         'evaluators': 'Registra jurados y delega accesos específicos.',
-        'results': 'Monitorea el avance de la feria y descarga reportes en CSV.'
+        'results': 'Monitorea el avance de la feria y descarga reportes en CSV.',
+        'settings': 'Configura la información general y método de calificación de la feria.'
       };
       document.querySelector('.content-header h2').innerText = titles[tabId];
       document.querySelector('.content-header p').innerText = subs[tabId];
@@ -984,7 +1051,69 @@
       if (tabId === 'stands') loadStandsAndProjects();
       if (tabId === 'evaluators') loadEvaluatorsTab();
       if (tabId === 'results') loadResults();
+      if (tabId === 'settings') loadSettingsTab();
     }
+
+    // --- Ajustes de la Feria ---
+    async function loadSettingsTab() {
+      try {
+        const res = await apiRequest('/api/ferias/me');
+        if (res.ok) {
+          const feria = await res.json();
+          document.getElementById('setting-feria-name').value = feria.name || '';
+          document.getElementById('setting-feria-desc').value = feria.description || '';
+          
+          if (feria.startDate) {
+            document.getElementById('setting-feria-start').value = feria.startDate.split('T')[0];
+          } else {
+            document.getElementById('setting-feria-start').value = '';
+          }
+          if (feria.endDate) {
+            document.getElementById('setting-feria-end').value = feria.endDate.split('T')[0];
+          } else {
+            document.getElementById('setting-feria-end').value = '';
+          }
+          
+          document.getElementById('setting-feria-calculation').value = feria.calculationType || 'SUMATIVE';
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    document.getElementById('feria-settings-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      setLoader(true);
+      const name = document.getElementById('setting-feria-name').value.trim();
+      const description = document.getElementById('setting-feria-desc').value.trim();
+      const startDate = document.getElementById('setting-feria-start').value;
+      const endDate = document.getElementById('setting-feria-end').value;
+      const calculationType = document.getElementById('setting-feria-calculation').value;
+
+      try {
+        const res = await apiRequest('/api/ferias/me', 'PUT', {
+          name,
+          description,
+          startDate: startDate || null,
+          endDate: endDate || null,
+          calculationType
+        });
+        if (res.ok) {
+          const updated = await res.json();
+          localStorage.setItem('feriaName', updated.name || 'Mi Feria');
+          document.getElementById('feria-name-sidebar').innerText = updated.name || 'Mi Feria';
+          alert('Configuración de la feria guardada exitosamente.');
+        } else {
+          const err = await res.json();
+          alert(err.error || 'Error al guardar configuración');
+        }
+      } catch (err) {
+        console.error(err);
+        alert('Error al guardar la configuración.');
+      } finally {
+        setLoader(false);
+      }
+    });
 
     // Helper para spinner
     function setLoader(state) {
@@ -1075,11 +1204,13 @@
         }
 
         areasGlobal.forEach(area => {
+          const areaWeightLabel = area.weightPercentage !== null && area.weightPercentage !== undefined ? ` (${area.weightPercentage}%)` : '';
           const critRows = area.criteria.map(crit => `
             <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1.5px solid var(--border);">
               <div>
                 <strong>${crit.name}</strong> 
                 <span class="badge badge-primary">Rango: ${Math.round(crit.minScore)} - ${Math.round(crit.maxScore)}</span>
+                <span class="badge badge-success" style="background: var(--success); color: white; margin-left: 6px;">Peso: ${crit.weight} pts</span>
               </div>
               <button class="action-btn" onclick="deleteCriterion('${crit.id}')"><i data-lucide="trash-2" style="width: 16px; height: 16px;"></i></button>
             </div>
@@ -1087,7 +1218,7 @@
 
           container.innerHTML += `
             <div class="accordion-header" onclick="toggleAccordion('area-${area.id}')">
-              <span>${area.name}</span>
+              <span>${area.name}${areaWeightLabel}</span>
               <div style="display: flex; align-items: center; gap: 12px;" onclick="event.stopPropagation();">
                 <button class="action-btn" onclick="deleteArea('${area.id}')"><i data-lucide="trash-2" style="width: 16px; height:16px;"></i></button>
                 <i data-lucide="chevron-down" id="icon-area-${area.id}"></i>
@@ -1121,10 +1252,13 @@
       e.preventDefault();
       setLoader(true);
       const name = document.getElementById('new-area-name').value.trim();
+      const weightPercentageRaw = document.getElementById('new-area-weight').value.trim();
+      const weightPercentage = weightPercentageRaw ? parseFloat(weightPercentageRaw) : null;
       try {
-        const res = await apiRequest('/api/management/areas', 'POST', { name });
+        const res = await apiRequest('/api/management/areas', 'POST', { name, weightPercentage });
         if (res.ok) {
           document.getElementById('new-area-name').value = '';
+          document.getElementById('new-area-weight').value = '';
           await loadRubric();
         } else {
           const err = await res.json();
@@ -1161,6 +1295,7 @@
       const name = document.getElementById('new-crit-name').value.trim();
       const minScore = parseFloat(document.getElementById('new-crit-min').value);
       const maxScore = parseFloat(document.getElementById('new-crit-max').value);
+      const weight = parseFloat(document.getElementById('new-crit-weight').value || '10');
 
       if (maxScore <= minScore) {
         alert('La nota máxima debe ser mayor que la mínima.');
@@ -1169,11 +1304,12 @@
       }
 
       try {
-        const res = await apiRequest('/api/management/criteria', 'POST', { areaId, name, minScore, maxScore });
+        const res = await apiRequest('/api/management/criteria', 'POST', { areaId, name, minScore, maxScore, weight });
         if (res.ok) {
           document.getElementById('new-crit-name').value = '';
           document.getElementById('new-crit-min').value = '0';
           document.getElementById('new-crit-max').value = '100';
+          document.getElementById('new-crit-weight').value = '10';
           await loadRubric();
         } else {
           const err = await res.json();

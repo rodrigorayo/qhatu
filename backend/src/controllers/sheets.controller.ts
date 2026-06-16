@@ -94,6 +94,7 @@ export const importSheets = async (req: AuthRequest, res: Response): Promise<any
 
       let minScore = 0;
       let maxScore = 100;
+      let weight = 10.0;
       if (row[2]) {
         const parsedMin = parseFloat(row[2]);
         if (!isNaN(parsedMin)) minScore = parsedMin;
@@ -101,6 +102,10 @@ export const importSheets = async (req: AuthRequest, res: Response): Promise<any
       if (row[3]) {
         const parsedMax = parseFloat(row[3]);
         if (!isNaN(parsedMax)) maxScore = parsedMax;
+      }
+      if (row[4]) {
+        const parsedWeight = parseFloat(row[4]);
+        if (!isNaN(parsedWeight)) weight = parsedWeight;
       }
 
       let areaId = areaCache[areaName];
@@ -124,6 +129,7 @@ export const importSheets = async (req: AuthRequest, res: Response): Promise<any
           name: criterionName,
           minScore,
           maxScore,
+          weight,
           areaId
         }
       });
@@ -174,6 +180,11 @@ export const exportResultsCSV = async (req: AuthRequest, res: Response): Promise
     if (!feriaId) return res.status(403).json({ error: 'No tienes una feria asignada' });
 
     // 1. Obtener datos de resultados
+    const feria = await prisma.feria.findUnique({
+      where: { id: feriaId }
+    });
+    if (!feria) return res.status(404).json({ error: 'Feria no encontrada' });
+
     const areas = await prisma.area.findMany({
       where: { feriaId },
       include: { criteria: true }
@@ -198,6 +209,11 @@ export const exportResultsCSV = async (req: AuthRequest, res: Response): Promise
       include: { criterion: true, jurado: true }
     });
 
+    const memberEvals = await prisma.evaluationMember.findMany({
+      where: { member: { stand: { feriaId } } },
+      include: { criterion: true, delegado: true }
+    });
+
     // 2. Generar contenido CSV
     const csvRows = [];
     // Cabecera
@@ -217,9 +233,56 @@ export const exportResultsCSV = async (req: AuthRequest, res: Response): Promise
             : areas.flatMap(a => a.criteria.map(c => c.id));
 
           const myEvals = standEvaluations.filter(e => e.juradoId === evaluator.id);
+          const completedCount = myEvals.length;
+
           let totalScore = 0;
-          if (myEvals.length > 0) {
-            totalScore = myEvals.reduce((sum, e) => sum + e.rawScore, 0);
+          if (completedCount > 0) {
+            if (feria.calculationType === 'WEIGHTED') {
+              let weightedSum = 0;
+              let totalWeightPct = 0;
+
+              for (const area of areas) {
+                const areaCriteria = area.criteria.filter(c => targetCriteriaIds.includes(c.id));
+                if (areaCriteria.length === 0) continue;
+
+                const areaEvals = myEvals.filter(e => areaCriteria.some(c => c.id === e.criterionId));
+                
+                const areaEarned = areaEvals.reduce((sum, e) => {
+                  const crit = areaCriteria.find(c => c.id === e.criterionId);
+                  if (crit) {
+                    const min = crit.minScore;
+                    const max = crit.maxScore;
+                    const weight = (crit as any).weight ?? 10.0;
+                    if (max <= min) return sum;
+                    const val = (e.rawScore - min) / (max - min);
+                    return sum + Math.max(0, Math.min(1, val)) * weight;
+                  }
+                  return sum;
+                }, 0);
+
+                const areaMaxWeight = areaCriteria.reduce((sum, c) => sum + ((c as any).weight ?? 10.0), 0);
+                const areaPercentage = areaMaxWeight > 0 ? (areaEarned / areaMaxWeight) * 100 : 0;
+                const areaWeightPct = area.weightPercentage ?? 0;
+
+                weightedSum += (areaPercentage * areaWeightPct) / 100;
+                totalWeightPct += areaWeightPct;
+              }
+
+              totalScore = totalWeightPct > 0 ? (weightedSum / totalWeightPct) * 100 : 0;
+            } else {
+              totalScore = myEvals.reduce((sum, e) => {
+                const crit = areas.flatMap(a => a.criteria).find(c => c.id === e.criterionId);
+                if (crit) {
+                  const min = crit.minScore;
+                  const max = crit.maxScore;
+                  const weight = (crit as any).weight ?? 10.0;
+                  if (max <= min) return sum;
+                  const val = (e.rawScore - min) / (max - min);
+                  return sum + Math.max(0, Math.min(1, val)) * weight;
+                }
+                return sum;
+              }, 0);
+            }
           }
           return totalScore;
         });
@@ -239,10 +302,6 @@ export const exportResultsCSV = async (req: AuthRequest, res: Response): Promise
       }
 
       // Delegado avg
-      const memberEvals = await prisma.evaluationMember.findMany({
-        where: { member: { standId: stand.id } },
-        include: { criterion: true }
-      });
       const delegadosDetails = standAssignments
         .filter(a => a.roleInStand === 'DELEGADO')
         .flatMap(assignment => {
@@ -254,9 +313,56 @@ export const exportResultsCSV = async (req: AuthRequest, res: Response): Promise
 
           return stand.members.map(member => {
             const memberEvaluations = memberEvals.filter(e => e.memberId === member.id && e.delegadoId === evaluator.id);
+            const completedCount = memberEvaluations.length;
+
             let totalScore = 0;
-            if (memberEvaluations.length > 0) {
-              totalScore = memberEvaluations.reduce((sum, e) => sum + e.rawScore, 0);
+            if (completedCount > 0) {
+              if (feria.calculationType === 'WEIGHTED') {
+                let weightedSum = 0;
+                let totalWeightPct = 0;
+
+                for (const area of areas) {
+                  const areaCriteria = area.criteria.filter(c => targetCriteriaIds.includes(c.id));
+                  if (areaCriteria.length === 0) continue;
+
+                  const areaEvals = memberEvaluations.filter(e => areaCriteria.some(c => c.id === e.criterionId));
+                  
+                  const areaEarned = areaEvals.reduce((sum, e) => {
+                    const crit = areaCriteria.find(c => c.id === e.criterionId);
+                    if (crit) {
+                      const min = crit.minScore;
+                      const max = crit.maxScore;
+                      const weight = (crit as any).weight ?? 10.0;
+                      if (max <= min) return sum;
+                      const val = (e.rawScore - min) / (max - min);
+                      return sum + Math.max(0, Math.min(1, val)) * weight;
+                    }
+                    return sum;
+                  }, 0);
+
+                  const areaMaxWeight = areaCriteria.reduce((sum, c) => sum + ((c as any).weight ?? 10.0), 0);
+                  const areaPercentage = areaMaxWeight > 0 ? (areaEarned / areaMaxWeight) * 100 : 0;
+                  const areaWeightPct = area.weightPercentage ?? 0;
+
+                  weightedSum += (areaPercentage * areaWeightPct) / 100;
+                  totalWeightPct += areaWeightPct;
+                }
+
+                totalScore = totalWeightPct > 0 ? (weightedSum / totalWeightPct) * 100 : 0;
+              } else {
+                totalScore = memberEvaluations.reduce((sum, e) => {
+                  const crit = areas.flatMap(a => a.criteria).find(c => c.id === e.criterionId);
+                  if (crit) {
+                    const min = crit.minScore;
+                    const max = crit.maxScore;
+                    const weight = (crit as any).weight ?? 10.0;
+                    if (max <= min) return sum;
+                    const val = (e.rawScore - min) / (max - min);
+                    return sum + Math.max(0, Math.min(1, val)) * weight;
+                  }
+                  return sum;
+                }, 0);
+              }
             }
             return totalScore;
           });
