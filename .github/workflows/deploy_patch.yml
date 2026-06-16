@@ -34,7 +34,7 @@ jobs:
           cache: true
 
       - name: Run Shorebird Patch
-        run: shorebird patch android --force
+        run: shorebird patch android
         working-directory: qhatu_app
         env:
           SHOREBIRD_TOKEN: ${{ secrets.SHOREBIRD_TOKEN }}
