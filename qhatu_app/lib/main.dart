@@ -99,7 +99,8 @@ class QhatuApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const seedColor = Color(0xFF6B7C98);
+    const seedColor = Color(0xFF003366);
+    const secondaryColor = Color(0xFFFDB913);
 
     return MaterialApp.router(
       routerConfig: router,
@@ -109,6 +110,8 @@ class QhatuApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(
           seedColor: seedColor,
           brightness: Brightness.light,
+        ).copyWith(
+          secondary: secondaryColor,
         ),
         textTheme: GoogleFonts.interTextTheme(
           Theme.of(context).textTheme,
@@ -123,6 +126,8 @@ class QhatuApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(
           seedColor: seedColor,
           brightness: Brightness.dark,
+        ).copyWith(
+          secondary: secondaryColor,
         ),
         textTheme: GoogleFonts.interTextTheme(
           ThemeData.dark().textTheme,
