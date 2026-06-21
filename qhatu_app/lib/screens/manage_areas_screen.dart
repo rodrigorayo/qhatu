@@ -107,6 +107,135 @@ class _ManageAreasScreenState extends State<ManageAreasScreen> {
     }
   }
 
+  void _showEditAreaDialog(Map<String, dynamic> area) {
+    final nameController = TextEditingController(text: area['name']);
+    final weightController = TextEditingController(
+      text: area['weightPercentage'] != null ? area['weightPercentage'].toString() : '',
+    );
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Editar Área'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: nameController,
+              decoration: const InputDecoration(labelText: 'Nombre del Área'),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: weightController,
+              decoration: const InputDecoration(labelText: 'Peso de Área % (Opcional)'),
+              keyboardType: TextInputType.number,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
+          FilledButton(
+            onPressed: () async {
+              if (nameController.text.trim().isEmpty) return;
+              final weightPct = double.tryParse(weightController.text.trim());
+              Navigator.pop(context);
+              await _updateArea(area['id'], nameController.text.trim(), weightPct);
+            },
+            child: const Text('Guardar'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _updateArea(String id, String name, double? weightPercentage) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+
+      final response = await http.put(
+        Uri.parse('${Config.baseUrl}/api/management/areas/$id'),
+        headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer $token'},
+        body: jsonEncode({
+          'name': name,
+          'weightPercentage': weightPercentage
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        _fetchAreas();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Área actualizada con éxito'), backgroundColor: Colors.green),
+          );
+        }
+      } else {
+        final error = jsonDecode(response.body)['error'] ?? 'Error al actualizar área';
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(error), backgroundColor: Colors.red),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Error de conexión')));
+      }
+    }
+  }
+
+  void _confirmDeleteArea(String id, String name) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Eliminar Área'),
+        content: Text('¿Estás seguro de que deseas eliminar el área "$name"? Se eliminarán todos sus criterios de evaluación vinculados.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
+          FilledButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _deleteArea(id);
+            },
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('Eliminar'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _deleteArea(String id) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+
+      final response = await http.delete(
+        Uri.parse('${Config.baseUrl}/api/management/areas/$id'),
+        headers: {'Authorization': 'Bearer $token'},
+      );
+
+      if (response.statusCode == 200) {
+        _fetchAreas();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Área eliminada con éxito'), backgroundColor: Colors.green),
+          );
+        }
+      } else {
+        final error = jsonDecode(response.body)['error'] ?? 'Error al eliminar área';
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(error), backgroundColor: Colors.red),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Error de conexión')));
+      }
+    }
+  }
+
   void _showAddCriterionDialog(String areaId) {
     final nameController = TextEditingController();
     final minController = TextEditingController(text: '0');
@@ -194,6 +323,157 @@ class _ManageAreasScreenState extends State<ManageAreasScreen> {
     }
   }
 
+  void _showEditCriterionDialog(Map<String, dynamic> criterion) {
+    final nameController = TextEditingController(text: criterion['name']);
+    final minController = TextEditingController(text: (criterion['minScore'] ?? 0).round().toString());
+    final maxController = TextEditingController(text: (criterion['maxScore'] ?? 100).round().toString());
+    final weightController = TextEditingController(text: (criterion['weight'] ?? 10.0).toString());
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Editar Criterio'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(controller: nameController, decoration: const InputDecoration(labelText: 'Criterio')),
+              TextField(
+                controller: minController, 
+                decoration: const InputDecoration(labelText: 'Puntaje Mínimo del Jurado'), 
+                keyboardType: TextInputType.number,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              ),
+              TextField(
+                controller: maxController, 
+                decoration: const InputDecoration(labelText: 'Puntaje Máximo del Jurado'), 
+                keyboardType: TextInputType.number,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              ),
+              TextField(
+                controller: weightController, 
+                decoration: const InputDecoration(labelText: 'Peso / Valor Real en Nota Final'), 
+                keyboardType: TextInputType.number,
+                inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*'))],
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
+          FilledButton(
+            onPressed: () async {
+              if (nameController.text.trim().isEmpty) return;
+              final minVal = double.tryParse(minController.text.trim()) ?? 0.0;
+              final maxVal = double.tryParse(maxController.text.trim()) ?? 100.0;
+              final weightVal = double.tryParse(weightController.text.trim()) ?? 10.0;
+              if (maxVal <= minVal) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('El puntaje máximo debe ser mayor al mínimo')),
+                );
+                return;
+              }
+              Navigator.pop(context);
+              await _updateCriterion(criterion['id'], nameController.text.trim(), minVal, maxVal, weightVal);
+            },
+            child: const Text('Guardar'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _updateCriterion(String id, String name, double minScore, double maxScore, double weight) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+
+      final response = await http.put(
+        Uri.parse('${Config.baseUrl}/api/management/criteria/$id'),
+        headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer $token'},
+        body: jsonEncode({
+          'name': name,
+          'minScore': minScore,
+          'maxScore': maxScore,
+          'weight': weight
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        _fetchAreas();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Criterio actualizado con éxito'), backgroundColor: Colors.green),
+          );
+        }
+      } else {
+        final error = jsonDecode(response.body)['error'] ?? 'Error al actualizar criterio';
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(error), backgroundColor: Colors.red),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Error de conexión')));
+      }
+    }
+  }
+
+  void _confirmDeleteCriterion(String id, String name) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Eliminar Criterio'),
+        content: Text('¿Estás seguro de que deseas eliminar el criterio "$name"? Se perderán las evaluaciones vinculadas.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
+          FilledButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _deleteCriterion(id);
+            },
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('Eliminar'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _deleteCriterion(String id) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+
+      final response = await http.delete(
+        Uri.parse('${Config.baseUrl}/api/management/criteria/$id'),
+        headers: {'Authorization': 'Bearer $token'},
+      );
+
+      if (response.statusCode == 200) {
+        _fetchAreas();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Criterio eliminado con éxito'), backgroundColor: Colors.green),
+          );
+        }
+      } else {
+        final error = jsonDecode(response.body)['error'] ?? 'Error al eliminar criterio';
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(error), backgroundColor: Colors.red),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Error de conexión')));
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -218,15 +498,61 @@ class _ManageAreasScreenState extends State<ManageAreasScreen> {
                     return Card(
                       margin: const EdgeInsets.only(bottom: 16),
                       child: ExpansionTile(
-                        title: Text(area['name'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-                        subtitle: Text('${criteria.length} criterios' + (weightPct != null ? ' | Peso: ${weightPct.round()}%' : '')),
+                        title: Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(area['name'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    '${criteria.length} criterios' + (weightPct != null ? ' | Peso: ${weightPct.round()}%' : ''),
+                                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600, fontWeight: FontWeight.normal),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.edit_outlined, size: 20, color: Colors.blue),
+                              onPressed: () => _showEditAreaDialog(area),
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
+                            ),
+                            const SizedBox(width: 8),
+                            IconButton(
+                              icon: const Icon(Icons.delete_outline_rounded, size: 20, color: Colors.red),
+                              onPressed: () => _confirmDeleteArea(area['id'], area['name']),
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
+                            ),
+                          ],
+                        ),
                         children: [
                           ...criteria.map((c) => ListTile(
                                 leading: const Icon(Icons.check_circle_outline, color: Colors.green),
                                 title: Text(c['name']),
-                                trailing: Text(
-                                  'Jurado: ${(c['minScore'] ?? 0).round()}-${c['maxScore'].round()} pts | Valor Real: ${(c['weight'] ?? 10.0).toStringAsFixed(1)} pts', 
-                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)
+                                subtitle: Text(
+                                  'Jurado: ${(c['minScore'] ?? 0).round()}-${c['maxScore'].round()} pts | Valor Real: ${(c['weight'] ?? 10.0).toStringAsFixed(1)} pts',
+                                  style: TextStyle(fontSize: 11, color: Colors.grey.shade600, fontWeight: FontWeight.bold),
+                                ),
+                                trailing: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    IconButton(
+                                      icon: const Icon(Icons.edit_outlined, size: 18, color: Colors.blue),
+                                      onPressed: () => _showEditCriterionDialog(c),
+                                      padding: EdgeInsets.zero,
+                                      constraints: const BoxConstraints(),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    IconButton(
+                                      icon: const Icon(Icons.delete_outline_rounded, size: 18, color: Colors.red),
+                                      onPressed: () => _confirmDeleteCriterion(c['id'], c['name']),
+                                      padding: EdgeInsets.zero,
+                                      constraints: const BoxConstraints(),
+                                    ),
+                                  ],
                                 ),
                               )),
                           Padding(

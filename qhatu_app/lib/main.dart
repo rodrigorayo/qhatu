@@ -126,6 +126,9 @@ class QhatuApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(
           seedColor: seedColor,
           brightness: Brightness.dark,
+        ).copyWith(
+          primary: seedColor,
+          onPrimary: Colors.white,
         ),
         textTheme: GoogleFonts.interTextTheme(
           ThemeData.dark().textTheme,

@@ -52,3 +52,37 @@ export const deleteCriterion = async (req: AuthRequest, res: Response): Promise<
     res.status(500).json({ error: 'Error al eliminar criterio' });
   }
 };
+
+export const updateCriterion = async (req: AuthRequest, res: Response): Promise<any> => {
+  try {
+    const feriaId = req.user?.feriaId;
+    const id = req.params.id as string;
+    const { name, minScore, maxScore, weight } = req.body;
+
+    // Verificar propiedad a través del área
+    const criterion = await prisma.criterion.findUnique({ 
+      where: { id },
+      include: { area: true }
+    });
+
+    if (!criterion || criterion.area.feriaId !== feriaId) {
+      return res.status(404).json({ error: 'Criterio no encontrado o acceso denegado' });
+    }
+
+    const updatedCriterion = await prisma.criterion.update({
+      where: { id },
+      data: {
+        name,
+        minScore: minScore !== undefined ? parseFloat(minScore.toString()) : undefined,
+        maxScore: maxScore !== undefined ? parseFloat(maxScore.toString()) : undefined,
+        weight: weight !== undefined ? parseFloat(weight.toString()) : undefined
+      }
+    });
+
+    res.json(updatedCriterion);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error al actualizar criterio' });
+  }
+};
+

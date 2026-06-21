@@ -61,3 +61,32 @@ export const deleteArea = async (req: AuthRequest, res: Response): Promise<any> 
     res.status(500).json({ error: 'Error al eliminar área' });
   }
 };
+
+export const updateArea = async (req: AuthRequest, res: Response): Promise<any> => {
+  try {
+    const feriaId = req.user?.feriaId;
+    const id = req.params.id as string;
+    const { name, weightPercentage } = req.body;
+
+    // Verificar propiedad
+    const area = await prisma.area.findUnique({ where: { id } });
+    if (!area || area.feriaId !== feriaId) {
+      return res.status(404).json({ error: 'Área no encontrada o acceso denegado' });
+    }
+
+    const updatedArea = await prisma.area.update({
+      where: { id },
+      data: {
+        name,
+        weightPercentage: weightPercentage !== undefined ? (weightPercentage ? parseFloat(weightPercentage.toString()) : null) : undefined
+      },
+      include: { criteria: true }
+    });
+
+    res.json(updatedArea);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error al actualizar área' });
+  }
+};
+

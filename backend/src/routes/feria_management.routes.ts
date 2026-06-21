@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import { getAreas, createArea, deleteArea } from '../controllers/area.controller';
-import { createCriterion, deleteCriterion } from '../controllers/criterion.controller';
+import { getAreas, createArea, deleteArea, updateArea } from '../controllers/area.controller';
+import { createCriterion, deleteCriterion, updateCriterion } from '../controllers/criterion.controller';
 import { getStands, createStand, deleteStand, addMemberToStand, addMembersBatch, updateMember, deleteMember } from '../controllers/stand.controller';
 import { createEvaluatorAndAssign, getEvaluators, deleteAssignment } from '../controllers/assignment.controller';
 import { getResults } from '../controllers/evaluation.controller';
@@ -16,11 +16,14 @@ router.use(requireRole(['FERIA_ADMIN']));
 // --- Rutas de Áreas ---
 router.get('/areas', getAreas);
 router.post('/areas', createArea);
+router.put('/areas/:id', updateArea);
 router.delete('/areas/:id', deleteArea);
 
 // --- Rutas de Criterios ---
 router.post('/criteria', createCriterion);
+router.put('/criteria/:id', updateCriterion);
 router.delete('/criteria/:id', deleteCriterion);
+
 
 // --- Rutas de Stands y Miembros ---
 router.get('/stands', getStands);
