@@ -79,10 +79,12 @@ class _EvaluationFormScreenState extends State<EvaluationFormScreen> {
       setState(() {
         _criteria = filteredCriteria;
         for (var c in filteredCriteria) {
-          double defScore = 0.0;
-          try {
-            defScore = c.minScore;
-          } catch (_) {}
+          // Sanitize values to ensure they are finite and valid
+          if (!c.minScore.isFinite) c.minScore = 0.0;
+          if (!c.maxScore.isFinite) c.maxScore = 100.0;
+          if (!c.weight.isFinite) c.weight = 10.0;
+
+          double defScore = c.minScore;
           _scores[c.criterionId] = defScore;
           _scoreControllers[c.criterionId] = TextEditingController(text: defScore.round().toString());
           _showSlider[c.criterionId] = false;
@@ -90,7 +92,7 @@ class _EvaluationFormScreenState extends State<EvaluationFormScreen> {
         _isLoading = false;
       });
     } catch (e) {
-      print("Error loading criteria: $e");
+      debugPrint("Error loading criteria: $e");
       setState(() {
         _isLoading = false;
       });
@@ -115,29 +117,36 @@ class _EvaluationFormScreenState extends State<EvaluationFormScreen> {
       }
     }
 
+    final standName = widget.assignment.standName;
+    final confirm = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: const Text('Confirmar Calificación'),
+        content: Text('¿Estás seguro de subir las calificaciones del stand "$standName"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Sí, guardar'),
+          ),
+        ],
+      ),
+    );
+    if (confirm != true) return;
+
     final targetId = widget.assignment.roleInStand == 'DELEGADO' 
         ? _selectedMemberId! 
         : widget.assignment.standId;
 
-    // 1. Guardar localmente como fail-safe
-    for (var criterion in _criteria) {
-      final score = _scores[criterion.criterionId] ?? criterion.minScore;
-      final comment = _comments[criterion.criterionId] ?? '';
-
-      final pendingScore = PendingScore()
-        ..uniqueKey = '${targetId}_${criterion.criterionId}'
-        ..targetId = targetId
-        ..criterionId = criterion.criterionId
-        ..rawScore = score
-        ..comments = comment
-        ..isMemberScore = widget.assignment.roleInStand == 'DELEGADO';
-
-      await _isarService.savePendingScore(pendingScore);
-    }
-
     setState(() => _isLoading = true);
 
-    // 2. Intentar subir inmediatamente al servidor
+    bool isSavedOnline = false;
+    String errorMessage = 'No se pudo conectar con el servidor. Verifica tu conexión a Internet.';
+
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('token');
@@ -172,35 +181,97 @@ class _EvaluationFormScreenState extends State<EvaluationFormScreen> {
           'standScores': standScores,
           'memberScores': memberScores,
         }),
-      );
+      ).timeout(const Duration(seconds: 8));
 
       if (response.statusCode == 200) {
-        // Borrar de pendientes si la subida fue exitosa
-        for (var criterion in _criteria) {
-          await _isarService.deletePendingScore('${targetId}_${criterion.criterionId}');
-        }
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Evaluación guardada en el servidor exitosamente'), backgroundColor: Colors.green),
-          );
-        }
+        isSavedOnline = true;
       } else {
-        throw Exception();
+        try {
+          final body = jsonDecode(response.body);
+          if (body['message'] != null) {
+            errorMessage = body['message'].toString();
+          }
+        } catch (_) {}
       }
-    } catch (_) {
+    } catch (e) {
+      errorMessage = 'Error de conexión: $e';
+    }
+
+    setState(() => _isLoading = false);
+
+    if (isSavedOnline) {
+      // Guardar localmente la asignación como calificada ya que se subió correctamente al servidor
+      try {
+        final localAssignments = await _isarService.getAssignments();
+        final existing = localAssignments.firstWhere(
+          (a) => a.assignmentId == widget.assignment.assignmentId
+        );
+        existing.isEvaluated = true;
+        await _isarService.saveAssignment(existing);
+      } catch (_) {
+        // Asignación libre (select_stand_screen)
+        final newAssignment = LocalAssignment()
+          ..assignmentId = widget.assignment.assignmentId
+          ..standId = widget.assignment.standId
+          ..standName = widget.assignment.standName
+          ..standNumber = widget.assignment.standNumber
+          ..roleInStand = widget.assignment.roleInStand
+          ..membersJson = widget.assignment.membersJson
+          ..assignedAreaIdsJson = widget.assignment.assignedAreaIdsJson
+          ..isEvaluated = true;
+        await _isarService.saveAssignment(newAssignment);
+      }
+
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Guardado localmente. Se subirá al servidor automáticamente al volver la señal.'),
-            backgroundColor: Colors.orange,
-            duration: Duration(seconds: 4),
+        await showDialog<void>(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            title: const Row(
+              children: [
+                Icon(Icons.check_circle_rounded, color: Colors.green),
+                SizedBox(width: 8),
+                Text('Calificación Guardada'),
+              ],
+            ),
+            content: Text(
+              'La calificación del stand "$standName" ha sido guardada con éxito en el servidor.',
+            ),
+            actions: [
+              FilledButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Aceptar'),
+              ),
+            ],
           ),
         );
+        if (mounted) {
+          context.pop();
+        }
       }
-    } finally {
+    } else {
       if (mounted) {
-        setState(() => _isLoading = false);
-        context.pop();
+        showDialog<void>(
+          context: context,
+          builder: (context) => AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            title: Row(
+              children: [
+                Icon(Icons.error_outline_rounded, color: Theme.of(context).colorScheme.error),
+                const SizedBox(width: 8),
+                const Text('Error al Guardar'),
+              ],
+            ),
+            content: Text(errorMessage),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Entendido'),
+              ),
+            ],
+          ),
+        );
       }
     }
   }
@@ -228,13 +299,17 @@ class _EvaluationFormScreenState extends State<EvaluationFormScreen> {
               padding: const EdgeInsets.all(16),
               color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
               child: DropdownButtonFormField<String>(
+                isExpanded: true,
                 decoration: const InputDecoration(
                   labelText: 'Selecciona al Miembro a Evaluar',
                   border: OutlineInputBorder(),
                 ),
                 items: _members.map((m) => DropdownMenuItem<String>(
                   value: m['id'],
-                  child: Text(m['fullName']),
+                  child: Text(
+                    m['fullName'],
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 )).toList(),
                 onChanged: (val) {
                   setState(() => _selectedMemberId = val);

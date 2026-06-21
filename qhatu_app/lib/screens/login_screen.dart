@@ -41,6 +41,9 @@ class _LoginScreenState extends State<LoginScreen> {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('token', data['token']);
         await prefs.setString('role', data['user']['role']);
+        if (data['user']['username'] != null) {
+          await prefs.setString('username', data['user']['username']);
+        }
 
         if (!mounted) return;
         
@@ -83,130 +86,214 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Usamos el color base del tema
     final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: colorScheme.surface,
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(32.0),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 400),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Logo animado
-                Icon(
-                  Icons.auto_awesome_outlined,
-                  size: 80,
-                  color: colorScheme.primary,
-                ).animate().scale(delay: 100.ms).fadeIn(),
-
-                const SizedBox(height: 16),
-
-                Text(
-                  'Qhatu Ferias',
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: colorScheme.onSurface,
-                      ),
-                  textAlign: TextAlign.center,
-                ).animate().fadeIn(delay: 200.ms),
-
-                const SizedBox(height: 8),
-
-                Text(
-                  'Ingresa tus credenciales para continuar',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
-                      ),
-                  textAlign: TextAlign.center,
-                ).animate().fadeIn(delay: 300.ms),
-
-                const SizedBox(height: 32),
-
-                TextField(
-                  controller: _usernameController,
-                  decoration: InputDecoration(
-                    labelText: 'Usuario',
-                    prefixIcon: const Icon(Icons.person_outline),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    filled: true,
-                    fillColor: colorScheme.surfaceContainerHighest,
-                  ),
-                ).animate().fadeIn(delay: 400.ms).slideX(begin: -0.1),
-
-                const SizedBox(height: 16),
-
-                TextField(
-                  controller: _passwordController,
-                  obscureText: _obscurePassword,
-                  decoration: InputDecoration(
-                    labelText: 'Contraseña',
-                    prefixIcon: const Icon(Icons.lock_outline),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscurePassword
-                            ? Icons.visibility_off_outlined
-                            : Icons.visibility_outlined,
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          _obscurePassword = !_obscurePassword;
-                        });
-                      },
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    filled: true,
-                    fillColor: colorScheme.surfaceContainerHighest,
-                  ),
-                ).animate().fadeIn(delay: 500.ms).slideX(begin: 0.1),
-
-                const SizedBox(height: 32),
-
-                // Botón grande y fácil de presionar
-                FilledButton(
-                  onPressed: _isLoading ? null : _login,
-                  style: FilledButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 20),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: isDark 
+                ? [colorScheme.primary.withOpacity(0.15), colorScheme.surface]
+                : [colorScheme.primary.withOpacity(0.08), colorScheme.surface],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24.0),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 420),
+                  child: Card(
+                    elevation: 6,
+                    shadowColor: colorScheme.primary.withOpacity(isDark ? 0.2 : 0.1),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(28),
+                      side: BorderSide(
+                        color: colorScheme.outline.withOpacity(isDark ? 0.15 : 0.08),
+                      ),
                     ),
-                  ),
-                  child: _isLoading
-                      ? const SizedBox(
-                          height: 24,
-                          width: 24,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
+                    color: colorScheme.surface.withOpacity(0.9),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 28.0, vertical: 36.0),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          // Logo de UAB / Departamento de Inglés
+                          Center(
+                            child: Container(
+                              padding: const EdgeInsets.all(20),
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    colorScheme.primary,
+                                    colorScheme.primary.withOpacity(0.8),
+                                  ],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ),
+                                shape: BoxShape.circle,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: colorScheme.primary.withOpacity(0.3),
+                                    blurRadius: 16,
+                                    offset: const Offset(0, 8),
+                                  ),
+                                ],
+                              ),
+                              child: const Icon(
+                                Icons.school_rounded,
+                                size: 48,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ).animate().scale(delay: 100.ms, duration: 400.ms).fadeIn(),
+
+                          const SizedBox(height: 20),
+
+                          Text(
+                            'English Department',
+                            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: colorScheme.onSurface,
+                                  letterSpacing: 0.5,
+                                ),
+                            textAlign: TextAlign.center,
+                          ).animate().fadeIn(delay: 200.ms),
+
+                          const SizedBox(height: 6),
+
+                          Text(
+                            'UAB • Feria de Evaluación',
+                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                  color: colorScheme.onSurfaceVariant,
+                                  fontWeight: FontWeight.w500,
+                                  letterSpacing: 0.5,
+                                ),
+                            textAlign: TextAlign.center,
+                          ).animate().fadeIn(delay: 300.ms),
+
+                          const SizedBox(height: 32),
+
+                          // Campo Usuario
+                          TextField(
+                            controller: _usernameController,
+                            keyboardType: TextInputType.text,
+                            textInputAction: TextInputAction.next,
+                            decoration: InputDecoration(
+                              labelText: 'Usuario',
+                              hintText: 'Nombre de usuario',
+                              prefixIcon: Icon(Icons.person_rounded, color: colorScheme.primary),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(16),
+                                borderSide: BorderSide(color: colorScheme.outline.withOpacity(0.3)),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(16),
+                                borderSide: BorderSide(color: colorScheme.outline.withOpacity(0.2)),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(16),
+                                borderSide: BorderSide(color: colorScheme.primary, width: 2),
+                              ),
+                              filled: true,
+                              fillColor: colorScheme.surfaceVariant.withOpacity(0.15),
+                            ),
+                          ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.1),
+
+                          const SizedBox(height: 18),
+
+                          // Campo Contraseña
+                          TextField(
+                            controller: _passwordController,
+                            obscureText: _obscurePassword,
+                            textInputAction: TextInputAction.done,
+                            onSubmitted: (_) => _login(),
+                            decoration: InputDecoration(
+                              labelText: 'Contraseña',
+                              hintText: 'Ingresa tu contraseña',
+                              prefixIcon: Icon(Icons.lock_rounded, color: colorScheme.primary),
+                              suffixIcon: IconButton(
+                                icon: Icon(
+                                  _obscurePassword
+                                      ? Icons.visibility_off_rounded
+                                      : Icons.visibility_rounded,
+                                  color: colorScheme.onSurfaceVariant,
+                                ),
+                                onPressed: () {
+                                  setState(() {
+                                    _obscurePassword = !_obscurePassword;
+                                  });
+                                },
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(16),
+                                borderSide: BorderSide(color: colorScheme.outline.withOpacity(0.3)),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(16),
+                                borderSide: BorderSide(color: colorScheme.outline.withOpacity(0.2)),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(16),
+                                borderSide: BorderSide(color: colorScheme.primary, width: 2),
+                              ),
+                              filled: true,
+                              fillColor: colorScheme.surfaceVariant.withOpacity(0.15),
+                            ),
+                          ).animate().fadeIn(delay: 500.ms).slideY(begin: 0.1),
+
+                          const SizedBox(height: 32),
+
+                          // Botón Ingresar
+                          FilledButton(
+                            onPressed: _isLoading ? null : _login,
+                            style: FilledButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              elevation: 2,
+                              shadowColor: colorScheme.primary.withOpacity(0.3),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                            ),
+                            child: _isLoading
+                                ? const SizedBox(
+                                    height: 24,
+                                    width: 24,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : const Text(
+                                    'Ingresar',
+                                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                                  ),
+                          ).animate().fadeIn(delay: 600.ms).scale(),
+
+                          const SizedBox(height: 24),
+
+                          // Versión de parche
+                          Center(
+                            child: Text(
+                              'v0.1.0-patch7',
+                              style: TextStyle(
+                                color: colorScheme.onSurfaceVariant.withOpacity(0.4),
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                           ),
-                        )
-                      : const Text(
-                          'Ingresar',
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                        ),
-                ).animate().fadeIn(delay: 600.ms).scale(),
-
-                const SizedBox(height: 24),
-
-                Center(
-                  child: Text(
-                    'v0.1.0-patch7',
-                    style: TextStyle(
-                      color: colorScheme.onSurfaceVariant.withOpacity(0.5),
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              ],
+              ),
             ),
           ),
         ),

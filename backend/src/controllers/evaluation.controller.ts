@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { prisma } from '../index';
 import { AuthRequest } from '../middlewares/auth.middleware';
+import { syncResultsToSheets } from '../services/google.service';
 
 // Obtener los stands asignados al evaluador
 export const getMyAssignments = async (req: AuthRequest, res: Response): Promise<any> => {
@@ -101,6 +102,7 @@ export const syncScores = async (req: AuthRequest, res: Response): Promise<any> 
   try {
     const userId = req.user?.id;
     if (!userId) return res.status(401).json({ error: 'No autorizado' });
+    const feriaId = req.user?.feriaId;
 
     const { standScores, memberScores } = req.body;
 
@@ -145,6 +147,24 @@ export const syncScores = async (req: AuthRequest, res: Response): Promise<any> 
     );
 
     await prisma.$transaction([...standOperations, ...memberOperations]);
+
+    // Disparar sincronización hacia Google Sheets en segundo plano
+    if (feriaId) {
+      prisma.feria.findUnique({
+        where: { id: feriaId }
+      }).then(feria => {
+        if (feria && feria.metadata && typeof feria.metadata === 'object') {
+          const spreadsheetId = (feria.metadata as any).spreadsheetId;
+          if (spreadsheetId) {
+            syncResultsToSheets(spreadsheetId, feriaId).catch(err => {
+              console.error('Error al sincronizar resultados a Google Sheets en segundo plano:', err);
+            });
+          }
+        }
+      }).catch(err => {
+        console.error('Error al buscar la feria para sincronización a Sheets:', err);
+      });
+    }
 
     res.status(200).json({ message: 'Sincronización exitosa' });
   } catch (error) {

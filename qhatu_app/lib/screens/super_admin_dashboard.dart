@@ -1,5 +1,6 @@
 import '../config.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
@@ -9,6 +10,25 @@ class SuperAdminDashboard extends StatelessWidget {
   const SuperAdminDashboard({super.key});
 
   void _logout(BuildContext context) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Cerrar Sesión'),
+        content: const Text('¿Estás seguro de que deseas cerrar sesión?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Cerrar Sesión'),
+          ),
+        ],
+      ),
+    );
+    if (confirm != true) return;
+
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();
     if (context.mounted) {
@@ -140,11 +160,37 @@ class _CreateFeriaFormState extends State<CreateFeriaForm> {
   final _descController = TextEditingController();
   final _adminUserController = TextEditingController();
   final _adminPassController = TextEditingController();
+  final _gmailController = TextEditingController();
   bool _isLoading = false;
   bool _obscureAdminPass = true;
 
   void _submit() async {
     if (!_formKey.currentState!.validate()) return;
+
+    final name = _nameController.text.trim();
+    final adminUser = _adminUserController.text.trim();
+    final adminPass = _adminPassController.text.trim();
+    final gmail = _gmailController.text.trim();
+
+    final confirm = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: const Text('Confirmar Creación'),
+        content: Text('¿Estás seguro de crear la feria "$name" con el usuario administrador "$adminUser"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Sí, crear'),
+          ),
+        ],
+      ),
+    );
+    if (confirm != true) return;
     
     setState(() => _isLoading = true);
     
@@ -159,10 +205,11 @@ class _CreateFeriaFormState extends State<CreateFeriaForm> {
           'Authorization': 'Bearer $token',
         },
         body: jsonEncode({
-          'name': _nameController.text.trim(),
+          'name': name,
           'description': _descController.text.trim(),
-          'adminUsername': _adminUserController.text.trim(),
-          'adminPassword': _adminPassController.text.trim(),
+          'adminUsername': adminUser,
+          'adminPassword': adminPass,
+          'gmail': gmail.isEmpty ? null : gmail,
         }),
       );
 
@@ -171,8 +218,52 @@ class _CreateFeriaFormState extends State<CreateFeriaForm> {
       if (response.statusCode == 201) {
         if (!mounted) return;
         Navigator.of(context).pop(); // Cerrar modal
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Feria y Administrador creados con éxito'), backgroundColor: Colors.green),
+
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => AlertDialog(
+            title: const Text('¡Feria Creada!'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'La feria y las credenciales de administrador se crearon con éxito. Cópialas ahora:',
+                  style: TextStyle(fontSize: 14),
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[100],
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.grey[300]!),
+                  ),
+                  child: SelectableText(
+                    'Usuario: $adminUser\nContraseña: $adminPass',
+                    style: const TextStyle(fontFamily: 'monospace', fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton.icon(
+                icon: const Icon(Icons.copy),
+                label: const Text('Copiar'),
+                onPressed: () {
+                  Clipboard.setData(ClipboardData(text: 'Usuario: $adminUser, Contraseña: $adminPass'));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Credenciales de administrador copiadas')),
+                  );
+                },
+              ),
+              FilledButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Aceptar'),
+              ),
+            ],
+          ),
         );
       } else {
         final error = jsonDecode(response.body)['error'];
@@ -217,6 +308,16 @@ class _CreateFeriaFormState extends State<CreateFeriaForm> {
                 TextFormField(
                   controller: _descController,
                   decoration: const InputDecoration(labelText: 'Descripción (Opcional)', border: OutlineInputBorder()),
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _gmailController,
+                  decoration: const InputDecoration(
+                    labelText: 'Gmail del Administrador (Opcional)',
+                    helperText: 'Se compartirá acceso de edición a este correo en el Google Sheet creado.',
+                    border: OutlineInputBorder(),
+                  ),
+                  keyboardType: TextInputType.emailAddress,
                 ),
                 const SizedBox(height: 24),
                 Text('Credenciales del Administrador', style: Theme.of(context).textTheme.titleMedium),

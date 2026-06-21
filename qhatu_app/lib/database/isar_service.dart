@@ -78,15 +78,23 @@ class IsarService {
     for (var area in areasData) {
       final criteriaList = area['criteria'] as List<dynamic>;
       for (var c in criteriaList) {
+        double minVal = (c['minScore'] as num?)?.toDouble() ?? 0.0;
+        double maxVal = (c['maxScore'] as num?)?.toDouble() ?? 100.0;
+        double weightVal = (c['weight'] as num?)?.toDouble() ?? 10.0;
+
+        if (!minVal.isFinite) minVal = 0.0;
+        if (!maxVal.isFinite) maxVal = 100.0;
+        if (!weightVal.isFinite) weightVal = 10.0;
+
         newCriteria.add(
           LocalCriterion()
             ..criterionId = c['id']
             ..areaId = area['id']
             ..areaName = area['name']
             ..name = c['name']
-            ..minScore = (c['minScore'] as num?)?.toDouble() ?? 0.0
-            ..maxScore = (c['maxScore'] as num).toDouble()
-            ..weight = (c['weight'] as num?)?.toDouble() ?? 10.0
+            ..minScore = minVal
+            ..maxScore = maxVal
+            ..weight = weightVal
         );
       }
     }
@@ -130,6 +138,13 @@ class IsarService {
     final isar = await db;
     await isar.writeTxn(() async {
       await isar.pendingScores.filter().uniqueKeyEqualTo(uniqueKey).deleteAll();
+    });
+  }
+
+  Future<void> saveAssignment(LocalAssignment assignment) async {
+    final isar = await db;
+    await isar.writeTxn(() async {
+      await isar.localAssignments.put(assignment);
     });
   }
 }

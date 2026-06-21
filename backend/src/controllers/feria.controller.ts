@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { prisma } from '../index';
 import bcrypt from 'bcryptjs';
 import { AuthRequest } from '../middlewares/auth.middleware';
+import { createSpreadsheet } from '../services/google.service';
 
 export const getFerias = async (req: AuthRequest, res: Response): Promise<any> => {
   try {
@@ -33,7 +34,7 @@ export const getFerias = async (req: AuthRequest, res: Response): Promise<any> =
 
 export const createFeriaWithAdmin = async (req: AuthRequest, res: Response): Promise<any> => {
   try {
-    const { name, description, calculationType, adminUsername, adminPassword } = req.body;
+    const { name, description, calculationType, adminUsername, adminPassword, gmail } = req.body;
 
     // Verificar si el usuario admin de feria ya existe
     const existingUser = await prisma.user.findUnique({
@@ -71,6 +72,30 @@ export const createFeriaWithAdmin = async (req: AuthRequest, res: Response): Pro
 
       return { feria: nuevaFeria, admin: { id: nuevoAdmin.id, username: nuevoAdmin.username } };
     });
+
+    // Intentar crear el Google Sheet para la feria de forma automática (fuera de la transacción de DB)
+    try {
+      const sheetsResult = await createSpreadsheet(name, gmail);
+      if (sheetsResult) {
+        const { spreadsheetId, spreadsheetUrl } = sheetsResult;
+        
+        // Actualizar la feria con la metadata de Google Sheets
+        await prisma.feria.update({
+          where: { id: result.feria.id },
+          data: {
+            metadata: {
+              spreadsheetId,
+              spreadsheetUrl
+            }
+          }
+        });
+        
+        // Adjuntar en la respuesta para que la UI de Flutter lo conozca inmediatamente
+        (result.feria as any).metadata = { spreadsheetId, spreadsheetUrl };
+      }
+    } catch (sheetError) {
+      console.error('Error al crear Google Sheet para la feria:', sheetError);
+    }
 
     res.status(201).json({
       message: 'Feria y Administrador creados exitosamente',

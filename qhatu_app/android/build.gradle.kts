@@ -46,15 +46,15 @@ subprojects {
                 }
 
                 try {
-                    // 2. Forzar compileSdkVersion a 34 para evitar incompatibilidad de metadatos AAR
+                    // 2. Forzar compileSdkVersion a 36 para evitar incompatibilidad de metadatos AAR
                     val setCompileSdkVersion = android.javaClass.getMethod("setCompileSdkVersion", Int::class.javaPrimitiveType)
-                    setCompileSdkVersion.invoke(android, 34)
-                    logger.quiet("Auto-configured compileSdkVersion to 34 for subproject: ${prj.name}")
+                    setCompileSdkVersion.invoke(android, 36)
+                    logger.quiet("Auto-configured compileSdkVersion to 36 for subproject: ${prj.name}")
                 } catch (e: Exception) {
                     try {
                         val setCompileSdkVersionInt = android.javaClass.getMethod("setCompileSdkVersion", Integer::class.java)
-                        setCompileSdkVersionInt.invoke(android, 34)
-                        logger.quiet("Auto-configured compileSdkVersion (Integer) to 34 for subproject: ${prj.name}")
+                        setCompileSdkVersionInt.invoke(android, 36)
+                        logger.quiet("Auto-configured compileSdkVersion (Integer) to 36 for subproject: ${prj.name}")
                     } catch (e2: Exception) {
                         // Ignorar
                     }

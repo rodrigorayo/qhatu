@@ -4,7 +4,7 @@ import { createCriterion, deleteCriterion } from '../controllers/criterion.contr
 import { getStands, createStand, deleteStand, addMemberToStand, addMembersBatch, updateMember, deleteMember } from '../controllers/stand.controller';
 import { createEvaluatorAndAssign, getEvaluators, deleteAssignment } from '../controllers/assignment.controller';
 import { getResults } from '../controllers/evaluation.controller';
-import { importSheets, exportResultsCSV } from '../controllers/sheets.controller';
+import { importSheets, exportResultsCSV, syncConfigFromGoogleSheets, syncResultsToGoogleSheets, createFeriaSpreadsheet } from '../controllers/sheets.controller';
 import { authenticateToken, requireRole } from '../middlewares/auth.middleware';
 
 const router = Router();
@@ -40,5 +40,8 @@ router.delete('/assignments/:id', deleteAssignment);
 router.get('/results', getResults);
 router.post('/import-sheets', importSheets);
 router.get('/export-csv', exportResultsCSV);
+router.post('/sheets/sync-config', syncConfigFromGoogleSheets);
+router.post('/sheets/sync-results', syncResultsToGoogleSheets);
+router.post('/sheets/create', createFeriaSpreadsheet);
 
 export default router;

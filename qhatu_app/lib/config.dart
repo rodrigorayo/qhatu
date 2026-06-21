@@ -1,4 +1,4 @@
 class Config {
-  // Configurado automáticamente a la dirección de tu servidor en la nube en Render
+  // En producción (Render):
   static const String baseUrl = 'https://qhatu-api.onrender.com';
 }

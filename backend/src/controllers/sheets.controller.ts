@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { prisma } from '../index';
 import { AuthRequest } from '../middlewares/auth.middleware';
+import { syncResultsToSheets, createSpreadsheet } from '../services/google.service';
 
 const parseCSV = (csvText: string): string[][] => {
   const lines = csvText.split(/\r?\n/);
@@ -398,5 +399,104 @@ export const exportResultsCSV = async (req: AuthRequest, res: Response): Promise
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Error al exportar CSV' });
+  }
+};
+
+export const syncConfigFromGoogleSheets = async (req: AuthRequest, res: Response): Promise<any> => {
+  try {
+    const feriaId = req.user?.feriaId;
+    if (!feriaId) return res.status(403).json({ error: 'No tienes una feria asignada' });
+
+    const feria = await prisma.feria.findUnique({ where: { id: feriaId } });
+    if (!feria) return res.status(404).json({ error: 'Feria no encontrada' });
+
+    if (!feria.metadata || typeof feria.metadata !== 'object') {
+      return res.status(400).json({ error: 'Esta feria no tiene un Google Sheet asociado' });
+    }
+
+    const spreadsheetId = (feria.metadata as any).spreadsheetId;
+    if (!spreadsheetId) {
+      return res.status(400).json({ error: 'Esta feria no tiene un Google Sheet asociado' });
+    }
+
+    const spreadsheetUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}`;
+    
+    req.body = { ...req.body, spreadsheetUrl, overwrite: true };
+    return importSheets(req, res);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error al sincronizar configuración de la feria' });
+  }
+};
+
+export const syncResultsToGoogleSheets = async (req: AuthRequest, res: Response): Promise<any> => {
+  try {
+    const feriaId = req.user?.feriaId;
+    if (!feriaId) return res.status(403).json({ error: 'No tienes una feria asignada' });
+
+    const feria = await prisma.feria.findUnique({ where: { id: feriaId } });
+    if (!feria) return res.status(404).json({ error: 'Feria no encontrada' });
+
+    if (!feria.metadata || typeof feria.metadata !== 'object') {
+      return res.status(400).json({ error: 'Esta feria no tiene un Google Sheet asociado' });
+    }
+
+    const spreadsheetId = (feria.metadata as any).spreadsheetId;
+    if (!spreadsheetId) {
+      return res.status(400).json({ error: 'Esta feria no tiene un Google Sheet asociado' });
+    }
+
+    const success = await syncResultsToSheets(spreadsheetId, feriaId);
+    if (!success) {
+      return res.status(500).json({ error: 'Error al sincronizar resultados a Google Sheets' });
+    }
+
+    res.status(200).json({ message: 'Resultados sincronizados exitosamente a Google Sheets' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error al sincronizar resultados de la feria' });
+  }
+};
+
+export const createFeriaSpreadsheet = async (req: AuthRequest, res: Response): Promise<any> => {
+  try {
+    const feriaId = req.user?.feriaId;
+    if (!feriaId) return res.status(403).json({ error: 'No tienes una feria asignada' });
+
+    const feria = await prisma.feria.findUnique({ where: { id: feriaId } });
+    if (!feria) return res.status(404).json({ error: 'Feria no encontrada' });
+
+    let currentMetadata = (feria.metadata && typeof feria.metadata === 'object') ? { ...feria.metadata as object } : {};
+    if ((currentMetadata as any).spreadsheetId) {
+      return res.status(400).json({ error: 'Esta feria ya tiene un Google Sheet asociado' });
+    }
+
+    const { gmail } = req.body;
+    const sheetsResult = await createSpreadsheet(feria.name, gmail);
+    if (!sheetsResult) {
+      return res.status(500).json({ error: 'No se pudo crear el Google Sheet. Verifica las credenciales de Google en el servidor.' });
+    }
+
+    const { spreadsheetId, spreadsheetUrl } = sheetsResult;
+    const updatedFeria = await prisma.feria.update({
+      where: { id: feriaId },
+      data: {
+        metadata: {
+          ...currentMetadata,
+          spreadsheetId,
+          spreadsheetUrl
+        }
+      }
+    });
+
+    res.status(201).json({
+      message: 'Google Sheet creado y asociado con éxito',
+      spreadsheetUrl,
+      spreadsheetId,
+      feria: updatedFeria
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error al crear el Google Sheet para la feria' });
   }
 };

@@ -1,5 +1,6 @@
 import '../config.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -188,7 +189,52 @@ class _ManageEvaluatorsScreenState extends State<ManageEvaluatorsScreen> {
 
       if (response.statusCode == 201) {
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Evaluador asignado correctamente'), backgroundColor: Colors.green));
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => AlertDialog(
+            title: const Text('¡Evaluador Asignado!'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Las credenciales han sido creadas con éxito. Cópialas ahora, ya que no se volverán a mostrar de forma directa:',
+                  style: TextStyle(fontSize: 14),
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[100],
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.grey[300]!),
+                  ),
+                  child: SelectableText(
+                    'Usuario: $username\nContraseña: $password',
+                    style: const TextStyle(fontFamily: 'monospace', fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton.icon(
+                icon: const Icon(Icons.copy),
+                label: const Text('Copiar'),
+                onPressed: () {
+                  Clipboard.setData(ClipboardData(text: 'Usuario: $username, Contraseña: $password'));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Credenciales copiadas al portapapeles')),
+                  );
+                },
+              ),
+              FilledButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Aceptar'),
+              ),
+            ],
+          ),
+        );
       } else {
         final error = jsonDecode(response.body)['error'];
         if (!mounted) return;
