@@ -288,7 +288,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           // Versión de parche
                           Center(
                             child: Text(
-                              'v0.1.0-patch10',
+                              'v0.1.0-patch11',
                               style: TextStyle(
                                 color: colorScheme.onSurfaceVariant.withOpacity(0.4),
                                 fontSize: 11,

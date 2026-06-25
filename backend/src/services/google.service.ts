@@ -5,8 +5,26 @@ import { prisma } from '../index';
 const clientEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
 const privateKeyRaw = process.env.GOOGLE_PRIVATE_KEY;
 
-// Formatear llave privada para que las nuevas líneas sean correctas
-const privateKey = privateKeyRaw ? privateKeyRaw.replace(/\\n/g, '\n') : '';
+// Helper to sanitize private key from env variables (handles quotes, literal or escaped newlines)
+const sanitizePrivateKey = (key: string | undefined): string => {
+  if (!key) return '';
+  let cleaned = key.trim();
+  
+  // Remove wrapping double or single quotes if present
+  if (cleaned.startsWith('"') && cleaned.endsWith('"')) {
+    cleaned = cleaned.substring(1, cleaned.length - 1).trim();
+  } else if (cleaned.startsWith("'") && cleaned.endsWith("'")) {
+    cleaned = cleaned.substring(1, cleaned.length - 1).trim();
+  }
+  
+  // Replace escaped newlines (both \n and \\n) with actual newlines
+  cleaned = cleaned.replace(/\\n/g, '\n');
+  cleaned = cleaned.replace(/\\r/g, '\r');
+  
+  return cleaned;
+};
+
+const privateKey = sanitizePrivateKey(privateKeyRaw);
 
 const isGoogleConfigured = (): boolean => {
   return !!(clientEmail && privateKey);
