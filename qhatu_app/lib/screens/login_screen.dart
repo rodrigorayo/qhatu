@@ -92,12 +92,13 @@ class _LoginScreenState extends State<LoginScreen> {
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: isDark 
-                ? [colorScheme.primary.withOpacity(0.15), colorScheme.surface]
-                : [colorScheme.primary.withOpacity(0.08), colorScheme.surface],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
+          image: DecorationImage(
+            image: const AssetImage('assets/bandera-usa.jpg'),
+            fit: BoxFit.cover,
+            colorFilter: ColorFilter.mode(
+              Colors.black.withOpacity(isDark ? 0.65 : 0.3),
+              BlendMode.darken,
+            ),
           ),
         ),
         child: SafeArea(
@@ -280,7 +281,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           // Versión de parche
                           Center(
                             child: Text(
-                              'v0.1.0-patch9',
+                              'v0.1.0-patch10',
                               style: TextStyle(
                                 color: colorScheme.onSurfaceVariant.withOpacity(0.4),
                                 fontSize: 11,
