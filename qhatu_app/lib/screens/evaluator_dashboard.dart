@@ -5,9 +5,11 @@ import 'dart:convert';
 import 'dart:async';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:provider/provider.dart';
 import '../database/isar_service.dart';
 import '../database/models/local_models.dart';
 import '../config.dart';
+import '../providers/theme_provider.dart';
 
 class EvaluatorDashboard extends StatefulWidget {
   const EvaluatorDashboard({super.key});
@@ -370,6 +372,18 @@ class _EvaluatorDashboardState extends State<EvaluatorDashboard> {
           ],
         ),
         actions: [
+          IconButton(
+            icon: Icon(
+              Theme.of(context).brightness == Brightness.dark
+                  ? Icons.wb_sunny_rounded
+                  : Icons.nightlight_round,
+              color: Colors.white,
+            ),
+            onPressed: () {
+              Provider.of<ThemeProvider>(context, listen: false).toggleTheme();
+            },
+            tooltip: 'Cambiar tema',
+          ),
           IconButton(
             icon: _isSyncing 
               ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) 

@@ -62,7 +62,7 @@ class _EvaluationFormScreenState extends State<EvaluationFormScreen> {
       List<String> assignedAreaIds = [];
       try {
         final jsonStr = widget.assignment.assignedAreaIdsJson;
-        if (jsonStr != null && jsonStr.isNotEmpty) {
+        if (jsonStr.isNotEmpty) {
           assignedAreaIds = List<String>.from(jsonDecode(jsonStr));
         }
       } catch (_) {}
@@ -71,7 +71,6 @@ class _EvaluationFormScreenState extends State<EvaluationFormScreen> {
       if (assignedAreaIds.isNotEmpty) {
         filteredCriteria = criteria.where((c) {
           final aId = c.areaId;
-          if (aId == null) return false;
           return assignedAreaIds.contains(aId);
         }).toList();
       }
@@ -282,6 +281,9 @@ class _EvaluationFormScreenState extends State<EvaluationFormScreen> {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     // Agrupar criterios por área
     final Map<String, List<LocalCriterion>> groupedCriteria = {};
     for (var c in _criteria) {
@@ -297,7 +299,7 @@ class _EvaluationFormScreenState extends State<EvaluationFormScreen> {
           if (widget.assignment.roleInStand == 'DELEGADO')
             Container(
               padding: const EdgeInsets.all(16),
-              color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
+              color: colorScheme.surfaceVariant.withOpacity(0.5),
               child: DropdownButtonFormField<String>(
                 isExpanded: true,
                 decoration: const InputDecoration(
@@ -337,63 +339,77 @@ class _EvaluationFormScreenState extends State<EvaluationFormScreen> {
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
-                        color: Theme.of(context).colorScheme.primary,
+                        color: colorScheme.primary,
                       ),
                     ),
                     initiallyExpanded: true,
                     childrenPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     children: criteriaList.map((criterion) {
-                      final sliderEnabled = _showSlider[criterion.criterionId] ?? false;
-
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 24.0),
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 20.0),
+                        padding: const EdgeInsets.all(16.0),
+                        decoration: BoxDecoration(
+                          color: isDark ? Colors.white.withOpacity(0.02) : Colors.grey.shade50,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: isDark ? Colors.white.withOpacity(0.08) : Colors.grey.shade200,
+                          ),
+                        ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              criterion.name,
-                              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                            ),
-                            const SizedBox(height: 16),
                             Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                // Entrada Numérica directa
-                                SizedBox(
-                                  width: 110,
+                                Expanded(
+                                  child: Text(
+                                    criterion.name,
+                                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
+                                  ),
+                                ),
+                                // Caja de puntaje numérica
+                                Container(
+                                  width: 75,
+                                  height: 38,
+                                  decoration: BoxDecoration(
+                                    color: colorScheme.primary.withOpacity(0.06),
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(color: colorScheme.primary.withOpacity(0.3)),
+                                  ),
+                                  alignment: Alignment.center,
                                   child: TextField(
                                     controller: _scoreControllers[criterion.criterionId],
                                     keyboardType: TextInputType.number,
                                     textAlign: TextAlign.center,
-                                    inputFormatters: [
-                                      FilteringTextInputFormatter.digitsOnly,
-                                    ],
-                                    decoration: InputDecoration(
-                                      labelText: 'Nota (${criterion.minScore.round()}-${criterion.maxScore.round()})',
-                                      border: const OutlineInputBorder(),
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                      color: colorScheme.primary,
+                                    ),
+                                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                                    decoration: const InputDecoration(
+                                      border: InputBorder.none,
+                                      contentPadding: EdgeInsets.zero,
                                       isDense: true,
-                                      contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
                                     ),
                                     onChanged: (val) {
                                       final parsed = double.tryParse(val);
                                       if (parsed != null) {
+                                        double target = parsed;
                                         if (parsed > criterion.maxScore) {
+                                          target = criterion.maxScore;
                                           _scoreControllers[criterion.criterionId]?.text =
                                               criterion.maxScore.round().toString();
                                           _scoreControllers[criterion.criterionId]?.selection =
                                               TextSelection.fromPosition(
-                                            TextPosition(
-                                                offset: _scoreControllers[criterion.criterionId]!
-                                                    .text
-                                                    .length),
+                                            TextPosition(offset: _scoreControllers[criterion.criterionId]!.text.length),
                                           );
-                                          setState(() {
-                                            _scores[criterion.criterionId] = criterion.maxScore;
-                                          });
-                                        } else {
-                                          setState(() {
-                                            _scores[criterion.criterionId] = parsed;
-                                          });
+                                        } else if (parsed < criterion.minScore) {
+                                          target = criterion.minScore;
                                         }
+                                        setState(() {
+                                          _scores[criterion.criterionId] = target;
+                                        });
                                       } else {
                                         setState(() {
                                           _scores[criterion.criterionId] = criterion.minScore;
@@ -402,34 +418,39 @@ class _EvaluationFormScreenState extends State<EvaluationFormScreen> {
                                     },
                                   ),
                                 ),
-                                const Spacer(),
-                                // Etiqueta e Interruptor para mostrar Slider
-                                Text(
-                                  'Usar barra',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Switch(
-                                  value: sliderEnabled,
-                                  onChanged: (val) {
-                                    setState(() {
-                                      _showSlider[criterion.criterionId] = val;
-                                    });
-                                  },
-                                ),
                               ],
                             ),
+                            const SizedBox(height: 12),
                             
-                            // Deslizador opcional si el switch está encendido
-                            if (sliderEnabled) ...[
-                              const SizedBox(height: 12),
-                              Row(
-                                children: [
-                                  Text(criterion.minScore.round().toString(), style: const TextStyle(fontWeight: FontWeight.bold)),
-                                  Expanded(
+                            // Fila de Slider con - y + botones
+                            Row(
+                              children: [
+                                // Botón Menos
+                                IconButton(
+                                  icon: Icon(Icons.remove_circle_outline, color: colorScheme.primary),
+                                  onPressed: () {
+                                    final current = _scores[criterion.criterionId] ?? criterion.minScore;
+                                    if (current > criterion.minScore) {
+                                      final next = current - 1;
+                                      setState(() {
+                                        _scores[criterion.criterionId] = next;
+                                        _scoreControllers[criterion.criterionId]?.text = next.round().toString();
+                                      });
+                                    }
+                                  },
+                                ),
+                                // Slider
+                                Expanded(
+                                  child: SliderTheme(
+                                    data: SliderTheme.of(context).copyWith(
+                                      trackHeight: 6,
+                                      activeTrackColor: colorScheme.primary,
+                                      inactiveTrackColor: colorScheme.primary.withOpacity(0.15),
+                                      thumbColor: colorScheme.secondary,
+                                      overlayColor: colorScheme.secondary.withOpacity(0.12),
+                                      valueIndicatorColor: colorScheme.primary,
+                                      valueIndicatorTextStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                                    ),
                                     child: Slider(
                                       value: (_scores[criterion.criterionId] ?? criterion.minScore).clamp(criterion.minScore, criterion.maxScore),
                                       min: criterion.minScore,
@@ -441,42 +462,65 @@ class _EvaluationFormScreenState extends State<EvaluationFormScreen> {
                                       onChanged: (val) {
                                         setState(() {
                                           _scores[criterion.criterionId] = val;
-                                          _scoreControllers[criterion.criterionId]?.text =
-                                              val.round().toString();
+                                          _scoreControllers[criterion.criterionId]?.text = val.round().toString();
                                         });
                                       },
                                     ),
                                   ),
+                                ),
+                                // Botón Más
+                                IconButton(
+                                  icon: Icon(Icons.add_circle_outline, color: colorScheme.primary),
+                                  onPressed: () {
+                                    final current = _scores[criterion.criterionId] ?? criterion.minScore;
+                                    if (current < criterion.maxScore) {
+                                      final next = current + 1;
+                                      setState(() {
+                                        _scores[criterion.criterionId] = next;
+                                        _scoreControllers[criterion.criterionId]?.text = next.round().toString();
+                                      });
+                                    }
+                                  },
+                                ),
+                              ],
+                            ),
+                            
+                            // Mostrar Rango de nota de forma elegante
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
                                   Text(
-                                    criterion.maxScore.round().toString(),
-                                    style: const TextStyle(fontWeight: FontWeight.bold),
+                                    'Mín: ${criterion.minScore.round()} pts',
+                                    style: TextStyle(fontSize: 11, color: isDark ? Colors.grey.shade500 : Colors.grey.shade600),
+                                  ),
+                                  Text(
+                                    'Peso real ponderado: ${(((_scores[criterion.criterionId] ?? criterion.minScore) - criterion.minScore) / (criterion.maxScore - criterion.minScore) * criterion.weight).toStringAsFixed(1)} / ${criterion.weight.toStringAsFixed(1)} pts',
+                                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: colorScheme.secondary),
+                                  ),
+                                  Text(
+                                    'Máx: ${criterion.maxScore.round()} pts',
+                                    style: TextStyle(fontSize: 11, color: isDark ? Colors.grey.shade500 : Colors.grey.shade600),
                                   ),
                                 ],
                               ),
-                            ],
-                            
-                            const SizedBox(height: 12),
-                            Center(
-                              child: Text(
-                                'Puntaje: ${_scores[criterion.criterionId]?.round() ?? 0} / ${criterion.maxScore.round()}',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                  color: Theme.of(context).colorScheme.secondary,
-                                ),
-                              ),
                             ),
-                            const SizedBox(height: 12),
+                            const SizedBox(height: 14),
+                            
+                            // Comentario
                             TextField(
-                              decoration: const InputDecoration(
-                                labelText: 'Comentario (Opcional)',
-                                border: OutlineInputBorder(),
+                              style: const TextStyle(fontSize: 13),
+                              decoration: InputDecoration(
+                                prefixIcon: Icon(Icons.comment_outlined, size: 16, color: colorScheme.primary.withOpacity(0.6)),
+                                labelText: 'Observaciones / Comentario (Opcional)',
+                                labelStyle: const TextStyle(fontSize: 13),
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                                 isDense: true,
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                               ),
                               onChanged: (val) => _comments[criterion.criterionId] = val,
                             ),
-                            const SizedBox(height: 16),
-                            const Divider(),
                           ],
                         ),
                       );

@@ -6,6 +6,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:provider/provider.dart';
+import '../providers/theme_provider.dart';
 
 class FeriaAdminDashboard extends StatefulWidget {
   const FeriaAdminDashboard({super.key});
@@ -1774,6 +1776,17 @@ class _FeriaAdminDashboardState extends State<FeriaAdminDashboard> {
           ),
         ),
         actions: [
+          IconButton(
+            icon: Icon(
+              Theme.of(context).brightness == Brightness.dark
+                  ? Icons.wb_sunny_rounded
+                  : Icons.nightlight_round,
+            ),
+            onPressed: () {
+              Provider.of<ThemeProvider>(context, listen: false).toggleTheme();
+            },
+            tooltip: 'Cambiar tema',
+          ),
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: () => _loadTab(_currentIndex),

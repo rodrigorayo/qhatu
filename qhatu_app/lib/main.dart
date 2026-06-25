@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:provider/provider.dart';
 
+import 'providers/theme_provider.dart';
 import 'screens/login_screen.dart';
 import 'screens/super_admin_dashboard.dart';
 import 'screens/feria_admin_dashboard.dart';
@@ -89,7 +91,15 @@ void main() async {
     ],
   );
 
-  runApp(QhatuApp(router: router));
+  final themeProvider = ThemeProvider();
+  await themeProvider.loadThemeMode();
+
+  runApp(
+    ChangeNotifierProvider(
+      create: (_) => themeProvider,
+      child: QhatuApp(router: router),
+    ),
+  );
 }
 
 class QhatuApp extends StatelessWidget {
@@ -100,6 +110,7 @@ class QhatuApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const seedColor = Color(0xFF003264);
+    final themeProvider = Provider.of<ThemeProvider>(context);
 
     return MaterialApp.router(
       routerConfig: router,
@@ -134,7 +145,7 @@ class QhatuApp extends StatelessWidget {
           ThemeData.dark().textTheme,
         ),
       ),
-      themeMode: ThemeMode.system,
+      themeMode: themeProvider.themeMode,
     );
   }
 }

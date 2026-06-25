@@ -4,7 +4,9 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 import '../config.dart';
+import '../providers/theme_provider.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -89,20 +91,46 @@ class _LoginScreenState extends State<LoginScreen> {
     final colorScheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
+    final themeProvider = Provider.of<ThemeProvider>(context);
+
     return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          image: DecorationImage(
-            image: const AssetImage('assets/bandera-usa.jpg'),
-            fit: BoxFit.cover,
-            colorFilter: ColorFilter.mode(
-              Colors.black.withOpacity(isDark ? 0.65 : 0.3),
-              BlendMode.darken,
+      body: Stack(
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              image: DecorationImage(
+                image: const AssetImage('assets/bandera-usa.jpg'),
+                fit: BoxFit.cover,
+                colorFilter: ColorFilter.mode(
+                  Colors.black.withOpacity(isDark ? 0.65 : 0.3),
+                  BlendMode.darken,
+                ),
+              ),
             ),
           ),
-        ),
-        child: SafeArea(
-          child: Center(
+          Positioned(
+            top: 16,
+            right: 16,
+            child: SafeArea(
+              child: ClipOval(
+                child: Material(
+                  color: (isDark ? Colors.white : Colors.black).withOpacity(0.12),
+                  child: IconButton(
+                    icon: Icon(
+                      themeProvider.themeMode == ThemeMode.dark
+                          ? Icons.wb_sunny_rounded
+                          : Icons.nightlight_round,
+                      color: isDark ? Colors.white : const Color(0xFF003264),
+                    ),
+                    onPressed: () => themeProvider.toggleTheme(),
+                    tooltip: 'Cambiar tema',
+                  ),
+                ),
+              ),
+            ),
+          ),
+          SafeArea(
+            child: Center(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(24.0),
               child: Center(
@@ -124,35 +152,14 @@ class _LoginScreenState extends State<LoginScreen> {
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          // Logo de UAB / Departamento de Inglés
-                          Center(
-                            child: Container(
-                              padding: const EdgeInsets.all(20),
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [
-                                    colorScheme.primary,
-                                    colorScheme.primary.withOpacity(0.8),
-                                  ],
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                ),
-                                shape: BoxShape.circle,
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: colorScheme.primary.withOpacity(0.3),
-                                    blurRadius: 16,
-                                    offset: const Offset(0, 8),
-                                  ),
-                                ],
-                              ),
-                              child: const Icon(
-                                Icons.school_rounded,
-                                size: 48,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ).animate().scale(delay: 100.ms, duration: 400.ms).fadeIn(),
+                           // Logo de UAB / Departamento de Inglés
+                           Center(
+                             child: Image.asset(
+                               'assets/icono-english-uab-without-backgorund.png',
+                               height: 100,
+                               fit: BoxFit.contain,
+                             ),
+                           ).animate().scale(delay: 100.ms, duration: 400.ms).fadeIn(),
 
                           const SizedBox(height: 20),
 
@@ -296,8 +303,9 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
             ),
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
