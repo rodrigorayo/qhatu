@@ -609,6 +609,17 @@
                   <input type="number" id="new-area-weight" placeholder="Ej: 30" min="0" max="100">
                 </div>
               </div>
+              <div class="form-group" style="margin-top: 12px;">
+                <label>Evaluado por</label>
+                <div class="input-wrapper">
+                  <i data-lucide="users"></i>
+                  <select id="new-area-role" required>
+                    <option value="BOTH">Ambos (Jurados y Delegados)</option>
+                    <option value="JURADO">Sólo Jurados (Evalúan el Stand)</option>
+                    <option value="DELEGADO">Sólo Delegados (Evalúan a los Miembros)</option>
+                  </select>
+                </div>
+              </div>
               <button type="submit" class="btn" style="margin-top: 16px;">Crear Área</button>
             </form>
           </div>
@@ -1205,6 +1216,9 @@
 
         areasGlobal.forEach(area => {
           const areaWeightLabel = area.weightPercentage !== null && area.weightPercentage !== undefined ? ` (${area.weightPercentage}%)` : '';
+          const roleBadgeText = area.applicableRole === 'JURADO' ? 'Sólo Jurados' : (area.applicableRole === 'DELEGADO' ? 'Sólo Delegados' : 'Ambos');
+          const roleBadgeColor = area.applicableRole === 'JURADO' ? 'background: #003264; color: white;' : (area.applicableRole === 'DELEGADO' ? 'background: #FDB913; color: #000;' : 'background: #10B981; color: white;');
+          
           const critRows = area.criteria.map(crit => `
             <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1.5px solid var(--border);">
               <div>
@@ -1218,7 +1232,10 @@
 
           container.innerHTML += `
             <div class="accordion-header" onclick="toggleAccordion('area-${area.id}')">
-              <span>${area.name}${areaWeightLabel}</span>
+              <span style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                ${area.name}${areaWeightLabel}
+                <span class="badge" style="font-size: 11px; padding: 2px 8px; border-radius: 20px; ${roleBadgeColor}">${roleBadgeText}</span>
+              </span>
               <div style="display: flex; align-items: center; gap: 12px;" onclick="event.stopPropagation();">
                 <button class="action-btn" onclick="deleteArea('${area.id}')"><i data-lucide="trash-2" style="width: 16px; height:16px;"></i></button>
                 <i data-lucide="chevron-down" id="icon-area-${area.id}"></i>
@@ -1254,11 +1271,13 @@
       const name = document.getElementById('new-area-name').value.trim();
       const weightPercentageRaw = document.getElementById('new-area-weight').value.trim();
       const weightPercentage = weightPercentageRaw ? parseFloat(weightPercentageRaw) : null;
+      const applicableRole = document.getElementById('new-area-role').value;
       try {
-        const res = await apiRequest('/api/management/areas', 'POST', { name, weightPercentage });
+        const res = await apiRequest('/api/management/areas', 'POST', { name, weightPercentage, applicableRole });
         if (res.ok) {
           document.getElementById('new-area-name').value = '';
           document.getElementById('new-area-weight').value = '';
+          document.getElementById('new-area-role').value = 'BOTH';
           await loadRubric();
         } else {
           const err = await res.json();

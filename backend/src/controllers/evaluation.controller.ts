@@ -246,11 +246,12 @@ export const getResults = async (req: AuthRequest, res: Response): Promise<any> 
         .filter(a => a.roleInStand === 'JURADO')
         .map(assignment => {
           const evaluator = assignment.user;
-          // Criterios que le corresponde evaluar (si no especificó áreas, todos los de la feria)
+          // Criterios que le corresponde evaluar (si no especificó áreas, todos los de la feria que apliquen a JURADO/BOTH)
           const assignedAreas = assignment.areas;
+          const roleAreas = areas.filter(a => a.applicableRole === 'BOTH' || a.applicableRole === 'JURADO');
           const targetCriteriaIds = assignedAreas.length > 0
-            ? areas.filter(a => assignedAreas.some(aa => aa.id === a.id)).flatMap(a => a.criteria.map(c => c.id))
-            : areas.flatMap(a => a.criteria.map(c => c.id));
+            ? roleAreas.filter(a => assignedAreas.some(aa => aa.id === a.id)).flatMap(a => a.criteria.map(c => c.id))
+            : roleAreas.flatMap(a => a.criteria.map(c => c.id));
 
           // Evaluaciones hechas por este jurado
           const myEvals = standEvaluations.filter(e => e.juradoId === evaluator.id);
@@ -264,7 +265,7 @@ export const getResults = async (req: AuthRequest, res: Response): Promise<any> 
               let weightedSum = 0;
               let totalWeightPct = 0;
 
-              for (const area of areas) {
+              for (const area of roleAreas) {
                 const areaCriteria = area.criteria.filter(c => targetCriteriaIds.includes(c.id));
                 if (areaCriteria.length === 0) continue;
 
@@ -326,9 +327,10 @@ export const getResults = async (req: AuthRequest, res: Response): Promise<any> 
         .flatMap(assignment => {
           const evaluator = assignment.user;
           const assignedAreas = assignment.areas;
+          const roleAreas = areas.filter(a => a.applicableRole === 'BOTH' || a.applicableRole === 'DELEGADO');
           const targetCriteriaIds = assignedAreas.length > 0
-            ? areas.filter(a => assignedAreas.some(aa => aa.id === a.id)).flatMap(a => a.criteria.map(c => c.id))
-            : areas.flatMap(a => a.criteria.map(c => c.id));
+            ? roleAreas.filter(a => assignedAreas.some(aa => aa.id === a.id)).flatMap(a => a.criteria.map(c => c.id))
+            : roleAreas.flatMap(a => a.criteria.map(c => c.id));
 
           // Para cada miembro del stand, ver el avance
           return stand.members.map(member => {
@@ -342,7 +344,7 @@ export const getResults = async (req: AuthRequest, res: Response): Promise<any> 
                 let weightedSum = 0;
                 let totalWeightPct = 0;
 
-                for (const area of areas) {
+                for (const area of roleAreas) {
                   const areaCriteria = area.criteria.filter(c => targetCriteriaIds.includes(c.id));
                   if (areaCriteria.length === 0) continue;
 

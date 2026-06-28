@@ -25,12 +25,15 @@ export const createArea = async (req: AuthRequest, res: Response): Promise<any> 
     const feriaId = req.user?.feriaId;
     if (!feriaId) return res.status(403).json({ error: 'No tienes una feria asignada' });
 
-    const { name, weightPercentage } = req.body;
+    const { name, weightPercentage, applicableRole } = req.body;
+
+    const validRole = ['JURADO', 'DELEGADO', 'BOTH'].includes(applicableRole) ? applicableRole : 'BOTH';
 
     const newArea = await prisma.area.create({
       data: {
         name,
         weightPercentage: weightPercentage || null,
+        applicableRole: validRole,
         feriaId
       },
       include: { criteria: true }
@@ -66,7 +69,7 @@ export const updateArea = async (req: AuthRequest, res: Response): Promise<any> 
   try {
     const feriaId = req.user?.feriaId;
     const id = req.params.id as string;
-    const { name, weightPercentage } = req.body;
+    const { name, weightPercentage, applicableRole } = req.body;
 
     // Verificar propiedad
     const area = await prisma.area.findUnique({ where: { id } });
@@ -74,12 +77,17 @@ export const updateArea = async (req: AuthRequest, res: Response): Promise<any> 
       return res.status(404).json({ error: 'Área no encontrada o acceso denegado' });
     }
 
+    const dataToUpdate: any = { name };
+    if (weightPercentage !== undefined) {
+      dataToUpdate.weightPercentage = weightPercentage ? parseFloat(weightPercentage.toString()) : null;
+    }
+    if (applicableRole !== undefined) {
+      dataToUpdate.applicableRole = ['JURADO', 'DELEGADO', 'BOTH'].includes(applicableRole) ? applicableRole : 'BOTH';
+    }
+
     const updatedArea = await prisma.area.update({
       where: { id },
-      data: {
-        name,
-        weightPercentage: weightPercentage !== undefined ? (weightPercentage ? parseFloat(weightPercentage.toString()) : null) : undefined
-      },
+      data: dataToUpdate,
       include: { criteria: true }
     });
 

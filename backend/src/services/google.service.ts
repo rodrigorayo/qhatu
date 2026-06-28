@@ -149,8 +149,8 @@ export const createSpreadsheet = async (title: string, ownerEmail?: string): Pro
             values: [['Número', 'Nombre', 'Curso', 'Integrantes (separados por coma)']]
           },
           {
-            range: 'Criterios!A1:E1',
-            values: [['Área', 'Criterio', 'Nota Mínima', 'Nota Máxima', 'Peso Real']]
+            range: 'Criterios!A1:F1',
+            values: [['Área', 'Criterio', 'Nota Mínima', 'Nota Máxima', 'Peso Real', 'Evaluador (JURADO/DELEGADO/AMBOS)']]
           }
         ]
       })

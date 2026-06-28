@@ -4,19 +4,19 @@ import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart';
 
-import 'providers/theme_provider.dart';
-import 'screens/login_screen.dart';
-import 'screens/super_admin_dashboard.dart';
-import 'screens/feria_admin_dashboard.dart';
-import 'screens/manage_areas_screen.dart';
-import 'screens/manage_stands_screen.dart';
-import 'screens/manage_evaluators_screen.dart';
-import 'screens/evaluator_dashboard.dart';
-import 'screens/evaluation_form_screen.dart';
-import 'screens/select_stand_screen.dart';
-import 'screens/manage_ferias_screen.dart';
-import 'screens/feria_settings_screen.dart';
-import 'database/models/local_models.dart';
+import 'package:qhatu_app/core/theme/theme_provider.dart';
+import 'package:qhatu_app/features/auth/presentation/login_screen.dart';
+import 'package:qhatu_app/features/super_admin/presentation/super_admin_dashboard.dart';
+import 'package:qhatu_app/features/feria_admin/presentation/feria_admin_dashboard.dart';
+import 'package:qhatu_app/features/feria_admin/presentation/manage_areas_screen.dart';
+import 'package:qhatu_app/features/feria_admin/presentation/manage_stands_screen.dart';
+import 'package:qhatu_app/features/feria_admin/presentation/manage_evaluators_screen.dart';
+import 'package:qhatu_app/features/evaluator/presentation/evaluator_dashboard.dart';
+import 'package:qhatu_app/features/evaluator/presentation/evaluation_form_screen.dart';
+import 'package:qhatu_app/features/evaluator/presentation/select_stand_screen.dart';
+import 'package:qhatu_app/features/super_admin/presentation/manage_ferias_screen.dart';
+import 'package:qhatu_app/features/feria_admin/presentation/feria_settings_screen.dart';
+import 'package:qhatu_app/core/database/models/local_models.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

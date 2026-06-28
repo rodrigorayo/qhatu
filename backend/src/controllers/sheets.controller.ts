@@ -109,6 +109,18 @@ export const importSheets = async (req: AuthRequest, res: Response): Promise<any
         if (!isNaN(parsedWeight)) weight = parsedWeight;
       }
 
+      let applicableRole = 'BOTH';
+      if (row[5]) {
+        const rawRole = row[5].trim().toUpperCase();
+        if (rawRole === 'JURADO') {
+          applicableRole = 'JURADO';
+        } else if (rawRole === 'DELEGADO') {
+          applicableRole = 'DELEGADO';
+        } else if (rawRole === 'AMBOS' || rawRole === 'BOTH') {
+          applicableRole = 'BOTH';
+        }
+      }
+
       let areaId = areaCache[areaName];
       if (!areaId) {
         // Buscar o crear área
@@ -117,8 +129,16 @@ export const importSheets = async (req: AuthRequest, res: Response): Promise<any
         });
         if (!area) {
           area = await prisma.area.create({
-            data: { name: areaName, feriaId }
+            data: { name: areaName, applicableRole, feriaId }
           });
+        } else {
+          // Si la fila actual especifica un rol específico, actualizamos el área
+          if (applicableRole !== 'BOTH' && area.applicableRole !== applicableRole) {
+            area = await prisma.area.update({
+              where: { id: area.id },
+              data: { applicableRole }
+            });
+          }
         }
         areaId = area.id;
         areaCache[areaName] = areaId;

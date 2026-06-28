@@ -69,6 +69,7 @@ model Area {
   feria            Feria    @relation(fields: [feriaId], references: [id], onDelete: Cascade)
   name             String
   weightPercentage Float?   // Solo se usa si Feria.calculationType == WEIGHTED
+  applicableRole   String   @default("BOTH") // JURADO, DELEGADO, o BOTH
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
