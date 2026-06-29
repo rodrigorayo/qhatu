@@ -1169,15 +1169,15 @@
 
         if (res.ok) {
           const data = await res.json();
-          if (data.role !== 'FERIA_ADMIN') {
+          if (data.user.role !== 'FERIA_ADMIN') {
             alert('Solo el rol de Administrador de Feria puede usar este panel.');
             setLoader(false);
             return;
           }
           token = data.token;
           localStorage.setItem('token', token);
-          localStorage.setItem('username', data.username);
-          localStorage.setItem('feriaName', data.feriaName || 'Mi Feria');
+          localStorage.setItem('username', data.user.username);
+          localStorage.setItem('feriaName', data.user.feriaName || 'Mi Feria');
           showDashboard();
         } else {
           const errData = await res.json();

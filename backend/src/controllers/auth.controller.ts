@@ -10,7 +10,8 @@ export const login = async (req: Request, res: Response): Promise<any> => {
     const { username, password } = req.body;
 
     const user = await prisma.user.findUnique({
-      where: { username }
+      where: { username },
+      include: { feria: true }
     });
 
     if (!user) {
@@ -36,7 +37,8 @@ export const login = async (req: Request, res: Response): Promise<any> => {
         id: user.id,
         username: user.username,
         role: user.role,
-        feriaId: user.feriaId
+        feriaId: user.feriaId,
+        feriaName: user.feria?.name || 'Mi Feria'
       }
     });
   } catch (error) {
