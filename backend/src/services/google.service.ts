@@ -179,7 +179,7 @@ export const createSpreadsheet = async (title: string, ownerEmail?: string): Pro
 
     // 4. Si se provee un correo Gmail específico del administrador, compartir también con él
     if (ownerEmail && ownerEmail.includes('@')) {
-      const emailPermissionRes = await fetch(`https://www.googleapis.com/drive/v3/files/${spreadsheetId}/permissions`, {
+      const emailPermissionRes = await fetch(`https://www.googleapis.com/drive/v3/files/${spreadsheetId}/permissions?sendNotificationEmail=true`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
