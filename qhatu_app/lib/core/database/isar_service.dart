@@ -36,6 +36,7 @@ class IsarService {
         ..standNumber = stand['number']
         ..roleInStand = data['roleInStand']
         ..membersJson = jsonEncode(stand['members'])
+        ..metadataJson = jsonEncode(stand['metadata'] ?? {})
         ..assignedAreaIdsJson = jsonEncode(areaIds)
         ..isEvaluated = data['isEvaluated'] ?? false;
     }).toList();
@@ -54,7 +55,8 @@ class IsarService {
         ..standId = data['id']
         ..name = data['name']
         ..number = data['number']
-        ..membersJson = jsonEncode(data['members']);
+        ..membersJson = jsonEncode(data['members'])
+        ..metadataJson = jsonEncode(data['metadata'] ?? {});
     }).toList();
 
     await isar.writeTxn(() async {

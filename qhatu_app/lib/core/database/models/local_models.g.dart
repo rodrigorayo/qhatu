@@ -37,23 +37,28 @@ const LocalAssignmentSchema = CollectionSchema(
       name: r'membersJson',
       type: IsarType.string,
     ),
-    r'roleInStand': PropertySchema(
+    r'metadataJson': PropertySchema(
       id: 4,
+      name: r'metadataJson',
+      type: IsarType.string,
+    ),
+    r'roleInStand': PropertySchema(
+      id: 5,
       name: r'roleInStand',
       type: IsarType.string,
     ),
     r'standId': PropertySchema(
-      id: 5,
+      id: 6,
       name: r'standId',
       type: IsarType.string,
     ),
     r'standName': PropertySchema(
-      id: 6,
+      id: 7,
       name: r'standName',
       type: IsarType.string,
     ),
     r'standNumber': PropertySchema(
-      id: 7,
+      id: 8,
       name: r'standNumber',
       type: IsarType.string,
     )
@@ -95,6 +100,7 @@ int _localAssignmentEstimateSize(
   bytesCount += 3 + object.assignedAreaIdsJson.length * 3;
   bytesCount += 3 + object.assignmentId.length * 3;
   bytesCount += 3 + object.membersJson.length * 3;
+  bytesCount += 3 + object.metadataJson.length * 3;
   bytesCount += 3 + object.roleInStand.length * 3;
   bytesCount += 3 + object.standId.length * 3;
   bytesCount += 3 + object.standName.length * 3;
@@ -112,10 +118,11 @@ void _localAssignmentSerialize(
   writer.writeString(offsets[1], object.assignmentId);
   writer.writeBool(offsets[2], object.isEvaluated);
   writer.writeString(offsets[3], object.membersJson);
-  writer.writeString(offsets[4], object.roleInStand);
-  writer.writeString(offsets[5], object.standId);
-  writer.writeString(offsets[6], object.standName);
-  writer.writeString(offsets[7], object.standNumber);
+  writer.writeString(offsets[4], object.metadataJson);
+  writer.writeString(offsets[5], object.roleInStand);
+  writer.writeString(offsets[6], object.standId);
+  writer.writeString(offsets[7], object.standName);
+  writer.writeString(offsets[8], object.standNumber);
 }
 
 LocalAssignment _localAssignmentDeserialize(
@@ -130,10 +137,11 @@ LocalAssignment _localAssignmentDeserialize(
   object.id = id;
   object.isEvaluated = reader.readBool(offsets[2]);
   object.membersJson = reader.readString(offsets[3]);
-  object.roleInStand = reader.readString(offsets[4]);
-  object.standId = reader.readString(offsets[5]);
-  object.standName = reader.readString(offsets[6]);
-  object.standNumber = reader.readString(offsets[7]);
+  object.metadataJson = reader.readString(offsets[4]);
+  object.roleInStand = reader.readString(offsets[5]);
+  object.standId = reader.readString(offsets[6]);
+  object.standName = reader.readString(offsets[7]);
+  object.standNumber = reader.readString(offsets[8]);
   return object;
 }
 
@@ -159,6 +167,8 @@ P _localAssignmentDeserializeProp<P>(
     case 6:
       return (reader.readString(offset)) as P;
     case 7:
+      return (reader.readString(offset)) as P;
+    case 8:
       return (reader.readString(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -837,6 +847,142 @@ extension LocalAssignmentQueryFilter
   }
 
   QueryBuilder<LocalAssignment, LocalAssignment, QAfterFilterCondition>
+      metadataJsonEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'metadataJson',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalAssignment, LocalAssignment, QAfterFilterCondition>
+      metadataJsonGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'metadataJson',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalAssignment, LocalAssignment, QAfterFilterCondition>
+      metadataJsonLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'metadataJson',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalAssignment, LocalAssignment, QAfterFilterCondition>
+      metadataJsonBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'metadataJson',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalAssignment, LocalAssignment, QAfterFilterCondition>
+      metadataJsonStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'metadataJson',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalAssignment, LocalAssignment, QAfterFilterCondition>
+      metadataJsonEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'metadataJson',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalAssignment, LocalAssignment, QAfterFilterCondition>
+      metadataJsonContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'metadataJson',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalAssignment, LocalAssignment, QAfterFilterCondition>
+      metadataJsonMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'metadataJson',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalAssignment, LocalAssignment, QAfterFilterCondition>
+      metadataJsonIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'metadataJson',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<LocalAssignment, LocalAssignment, QAfterFilterCondition>
+      metadataJsonIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'metadataJson',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<LocalAssignment, LocalAssignment, QAfterFilterCondition>
       roleInStandEqualTo(
     String value, {
     bool caseSensitive = true,
@@ -1446,6 +1592,20 @@ extension LocalAssignmentQuerySortBy
   }
 
   QueryBuilder<LocalAssignment, LocalAssignment, QAfterSortBy>
+      sortByMetadataJson() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'metadataJson', Sort.asc);
+    });
+  }
+
+  QueryBuilder<LocalAssignment, LocalAssignment, QAfterSortBy>
+      sortByMetadataJsonDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'metadataJson', Sort.desc);
+    });
+  }
+
+  QueryBuilder<LocalAssignment, LocalAssignment, QAfterSortBy>
       sortByRoleInStand() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'roleInStand', Sort.asc);
@@ -1572,6 +1732,20 @@ extension LocalAssignmentQuerySortThenBy
   }
 
   QueryBuilder<LocalAssignment, LocalAssignment, QAfterSortBy>
+      thenByMetadataJson() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'metadataJson', Sort.asc);
+    });
+  }
+
+  QueryBuilder<LocalAssignment, LocalAssignment, QAfterSortBy>
+      thenByMetadataJsonDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'metadataJson', Sort.desc);
+    });
+  }
+
+  QueryBuilder<LocalAssignment, LocalAssignment, QAfterSortBy>
       thenByRoleInStand() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'roleInStand', Sort.asc);
@@ -1659,6 +1833,13 @@ extension LocalAssignmentQueryWhereDistinct
   }
 
   QueryBuilder<LocalAssignment, LocalAssignment, QDistinct>
+      distinctByMetadataJson({bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'metadataJson', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<LocalAssignment, LocalAssignment, QDistinct>
       distinctByRoleInStand({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'roleInStand', caseSensitive: caseSensitive);
@@ -1719,6 +1900,13 @@ extension LocalAssignmentQueryProperty
       membersJsonProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'membersJson');
+    });
+  }
+
+  QueryBuilder<LocalAssignment, String, QQueryOperations>
+      metadataJsonProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'metadataJson');
     });
   }
 
@@ -4670,18 +4858,23 @@ const LocalStandSchema = CollectionSchema(
       name: r'membersJson',
       type: IsarType.string,
     ),
-    r'name': PropertySchema(
+    r'metadataJson': PropertySchema(
       id: 1,
+      name: r'metadataJson',
+      type: IsarType.string,
+    ),
+    r'name': PropertySchema(
+      id: 2,
       name: r'name',
       type: IsarType.string,
     ),
     r'number': PropertySchema(
-      id: 2,
+      id: 3,
       name: r'number',
       type: IsarType.string,
     ),
     r'standId': PropertySchema(
-      id: 3,
+      id: 4,
       name: r'standId',
       type: IsarType.string,
     )
@@ -4721,6 +4914,7 @@ int _localStandEstimateSize(
 ) {
   var bytesCount = offsets.last;
   bytesCount += 3 + object.membersJson.length * 3;
+  bytesCount += 3 + object.metadataJson.length * 3;
   bytesCount += 3 + object.name.length * 3;
   bytesCount += 3 + object.number.length * 3;
   bytesCount += 3 + object.standId.length * 3;
@@ -4734,9 +4928,10 @@ void _localStandSerialize(
   Map<Type, List<int>> allOffsets,
 ) {
   writer.writeString(offsets[0], object.membersJson);
-  writer.writeString(offsets[1], object.name);
-  writer.writeString(offsets[2], object.number);
-  writer.writeString(offsets[3], object.standId);
+  writer.writeString(offsets[1], object.metadataJson);
+  writer.writeString(offsets[2], object.name);
+  writer.writeString(offsets[3], object.number);
+  writer.writeString(offsets[4], object.standId);
 }
 
 LocalStand _localStandDeserialize(
@@ -4748,9 +4943,10 @@ LocalStand _localStandDeserialize(
   final object = LocalStand();
   object.id = id;
   object.membersJson = reader.readString(offsets[0]);
-  object.name = reader.readString(offsets[1]);
-  object.number = reader.readString(offsets[2]);
-  object.standId = reader.readString(offsets[3]);
+  object.metadataJson = reader.readString(offsets[1]);
+  object.name = reader.readString(offsets[2]);
+  object.number = reader.readString(offsets[3]);
+  object.standId = reader.readString(offsets[4]);
   return object;
 }
 
@@ -4768,6 +4964,8 @@ P _localStandDeserializeProp<P>(
     case 2:
       return (reader.readString(offset)) as P;
     case 3:
+      return (reader.readString(offset)) as P;
+    case 4:
       return (reader.readString(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -5149,6 +5347,142 @@ extension LocalStandQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.greaterThan(
         property: r'membersJson',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<LocalStand, LocalStand, QAfterFilterCondition>
+      metadataJsonEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'metadataJson',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalStand, LocalStand, QAfterFilterCondition>
+      metadataJsonGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'metadataJson',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalStand, LocalStand, QAfterFilterCondition>
+      metadataJsonLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'metadataJson',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalStand, LocalStand, QAfterFilterCondition>
+      metadataJsonBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'metadataJson',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalStand, LocalStand, QAfterFilterCondition>
+      metadataJsonStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'metadataJson',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalStand, LocalStand, QAfterFilterCondition>
+      metadataJsonEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'metadataJson',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalStand, LocalStand, QAfterFilterCondition>
+      metadataJsonContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'metadataJson',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalStand, LocalStand, QAfterFilterCondition>
+      metadataJsonMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'metadataJson',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalStand, LocalStand, QAfterFilterCondition>
+      metadataJsonIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'metadataJson',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<LocalStand, LocalStand, QAfterFilterCondition>
+      metadataJsonIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'metadataJson',
         value: '',
       ));
     });
@@ -5568,6 +5902,18 @@ extension LocalStandQuerySortBy
     });
   }
 
+  QueryBuilder<LocalStand, LocalStand, QAfterSortBy> sortByMetadataJson() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'metadataJson', Sort.asc);
+    });
+  }
+
+  QueryBuilder<LocalStand, LocalStand, QAfterSortBy> sortByMetadataJsonDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'metadataJson', Sort.desc);
+    });
+  }
+
   QueryBuilder<LocalStand, LocalStand, QAfterSortBy> sortByName() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'name', Sort.asc);
@@ -5631,6 +5977,18 @@ extension LocalStandQuerySortThenBy
     });
   }
 
+  QueryBuilder<LocalStand, LocalStand, QAfterSortBy> thenByMetadataJson() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'metadataJson', Sort.asc);
+    });
+  }
+
+  QueryBuilder<LocalStand, LocalStand, QAfterSortBy> thenByMetadataJsonDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'metadataJson', Sort.desc);
+    });
+  }
+
   QueryBuilder<LocalStand, LocalStand, QAfterSortBy> thenByName() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'name', Sort.asc);
@@ -5677,6 +6035,13 @@ extension LocalStandQueryWhereDistinct
     });
   }
 
+  QueryBuilder<LocalStand, LocalStand, QDistinct> distinctByMetadataJson(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'metadataJson', caseSensitive: caseSensitive);
+    });
+  }
+
   QueryBuilder<LocalStand, LocalStand, QDistinct> distinctByName(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
@@ -5710,6 +6075,12 @@ extension LocalStandQueryProperty
   QueryBuilder<LocalStand, String, QQueryOperations> membersJsonProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'membersJson');
+    });
+  }
+
+  QueryBuilder<LocalStand, String, QQueryOperations> metadataJsonProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'metadataJson');
     });
   }
 

@@ -17,6 +17,7 @@ class LocalAssignment {
   // Lista de miembros codificada en JSON para el modo offline
   String membersJson = '[]'; 
 
+  String metadataJson = '{}'; // Contiene datos como curso/nivel escolar en formato JSON
   String assignedAreaIdsJson = '[]'; // IDs de las áreas asignadas (vacío = todas)
   bool isEvaluated = false;
 }
@@ -64,5 +65,7 @@ class LocalStand {
 
   // Lista de miembros codificada en JSON
   String membersJson = '[]';
+
+  String metadataJson = '{}'; // Contiene datos del stand
 }
 

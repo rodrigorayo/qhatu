@@ -293,6 +293,12 @@ class _EvaluationFormScreenState extends State<EvaluationFormScreen> {
     final colorScheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
+    Map<String, dynamic> metadata = {};
+    try {
+      metadata = jsonDecode(widget.assignment.metadataJson);
+    } catch (_) {}
+    final String? curso = metadata['curso'] ?? metadata['nivel'] ?? metadata['level'];
+
     // Agrupar criterios por área
     final Map<String, List<LocalCriterion>> groupedCriteria = {};
     for (var c in _criteria) {
@@ -301,10 +307,133 @@ class _EvaluationFormScreenState extends State<EvaluationFormScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Evaluando a ${widget.assignment.standName}'),
+        title: Text('Evaluando Stand ${widget.assignment.standNumber}'),
       ),
       body: Column(
         children: [
+          // Tarjeta informativa premium del Stand
+          Container(
+            width: double.infinity,
+            margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: isDark
+                    ? [colorScheme.primaryContainer, colorScheme.surfaceVariant]
+                    : [colorScheme.primary, colorScheme.primary.withBlue(160)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: colorScheme.shadow.withOpacity(0.08),
+                  blurRadius: 8,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        'STAND #${widget.assignment.standNumber}',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1.1,
+                        ),
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: (widget.assignment.roleInStand == 'JURADO')
+                            ? Colors.tealAccent.withOpacity(0.2)
+                            : Colors.amberAccent.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: (widget.assignment.roleInStand == 'JURADO')
+                              ? Colors.tealAccent
+                              : Colors.amberAccent,
+                          width: 1,
+                        ),
+                      ),
+                      child: Text(
+                        widget.assignment.roleInStand,
+                        style: TextStyle(
+                          color: (widget.assignment.roleInStand == 'JURADO')
+                              ? Colors.tealAccent
+                              : Colors.amberAccent,
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  widget.assignment.standName,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    height: 1.2,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                if (curso != null && curso.trim().isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: isDark ? colorScheme.onSurface : Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 3,
+                          offset: const Offset(0, 1),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.school_rounded,
+                          size: 15,
+                          color: isDark ? colorScheme.surface : colorScheme.primary,
+                        ),
+                        const SizedBox(width: 5),
+                        Text(
+                          curso.toUpperCase(),
+                          style: TextStyle(
+                            color: isDark ? colorScheme.surface : colorScheme.primary,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
           if (widget.assignment.roleInStand == 'DELEGADO')
             Container(
               padding: const EdgeInsets.all(16),

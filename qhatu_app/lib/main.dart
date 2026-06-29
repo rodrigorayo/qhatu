@@ -114,7 +114,7 @@ class QhatuApp extends StatelessWidget {
 
     return MaterialApp.router(
       routerConfig: router,
-      title: 'Qhatu - Ferias',
+      title: 'English Fair',
       theme: ThemeData(
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(
