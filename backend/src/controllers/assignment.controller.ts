@@ -62,20 +62,29 @@ export const getEvaluators = async (req: AuthRequest, res: Response): Promise<an
     const feriaId = req.user?.feriaId;
     if (!feriaId) return res.status(403).json({ error: 'No tienes una feria asignada' });
 
-    const evaluators = await prisma.user.findMany({
-      where: { feriaId, role: 'EVALUADOR' },
-      include: {
-        assignments: {
-          include: {
-            stand: true,
-            areas: true
-          }
-        }
+    const assignments = await prisma.assignment.findMany({
+      where: {
+        stand: { feriaId }
       },
-      orderBy: { username: 'asc' }
+      include: {
+        user: {
+          select: {
+            id: true,
+            username: true,
+            role: true
+          }
+        },
+        stand: true,
+        areas: true
+      },
+      orderBy: {
+        user: {
+          username: 'asc'
+        }
+      }
     });
 
-    res.json(evaluators);
+    res.json(assignments);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Error al obtener evaluadores' });
