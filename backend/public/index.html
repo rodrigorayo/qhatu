@@ -1405,8 +1405,9 @@
               <td>${stand.name}</td>
               <td>${cursoStr}</td>
               <td>${membersChips}</td>
-              <td style="text-align: center;">
-                <button class="action-btn" onclick="deleteStand('${stand.id}')"><i data-lucide="trash-2" style="width:18px; height:18px;"></i></button>
+              <td style="text-align: center; white-space: nowrap;">
+                <button class="action-btn" onclick="editStand('${stand.id}')" title="Editar Stand" style="margin-right: 8px;"><i data-lucide="edit-3" style="width:18px; height:18px; color: var(--primary);"></i></button>
+                <button class="action-btn" onclick="deleteStand('${stand.id}')" title="Eliminar Stand"><i data-lucide="trash-2" style="width:18px; height:18px; color: #d9534f;"></i></button>
               </td>
             </tr>
           `;
@@ -1493,6 +1494,55 @@
         }
       } catch (err) {
         console.error(err);
+      } finally {
+        setLoader(false);
+      }
+    }
+
+    // Editar Stand
+    async function editStand(standId) {
+      const stand = standsGlobal.find(s => s.id === standId);
+      if (!stand) return;
+
+      let currentCurso = '';
+      if (stand.metadata && typeof stand.metadata === 'object') {
+        currentCurso = stand.metadata.curso || '';
+      }
+
+      const newNumber = prompt('Editar Número del Stand:', stand.number);
+      if (newNumber === null) return;
+      if (!newNumber.trim()) {
+        alert('El número de stand es obligatorio.');
+        return;
+      }
+
+      const newName = prompt('Editar Nombre del Proyecto:', stand.name);
+      if (newName === null) return;
+      if (!newName.trim()) {
+        alert('El nombre del proyecto es obligatorio.');
+        return;
+      }
+
+      const newCurso = prompt('Editar Curso / Grado (Opcional):', currentCurso);
+      if (newCurso === null) return;
+
+      setLoader(true);
+      try {
+        const res = await apiRequest(`/api/management/stands/${standId}`, 'PUT', {
+          number: newNumber.trim(),
+          name: newName.trim(),
+          metadata: { curso: newCurso.trim() }
+        });
+
+        if (res.ok) {
+          await loadStandsAndProjects();
+        } else {
+          const err = await res.json();
+          alert(err.error || 'Error al actualizar el stand');
+        }
+      } catch (err) {
+        console.error(err);
+        alert('Error de conexión');
       } finally {
         setLoader(false);
       }

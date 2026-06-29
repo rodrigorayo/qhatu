@@ -189,3 +189,34 @@ export const deleteMember = async (req: AuthRequest, res: Response): Promise<any
     res.status(500).json({ error: 'Error al eliminar miembro' });
   }
 };
+
+export const updateStand = async (req: AuthRequest, res: Response): Promise<any> => {
+  try {
+    const feriaId = req.user?.feriaId;
+    const standId = req.params.id as string;
+    const { number, name, metadata } = req.body;
+
+    const stand = await prisma.stand.findUnique({
+      where: { id: standId }
+    });
+
+    if (!stand || stand.feriaId !== feriaId) {
+      return res.status(404).json({ error: 'Stand no encontrado o acceso denegado' });
+    }
+
+    const updatedStand = await prisma.stand.update({
+      where: { id: standId },
+      data: {
+        number: number ?? stand.number,
+        name: name ?? stand.name,
+        metadata: metadata !== undefined ? metadata : stand.metadata
+      }
+    });
+
+    res.json(updatedStand);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error al actualizar stand' });
+  }
+};
+

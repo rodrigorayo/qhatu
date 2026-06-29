@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { getAreas, createArea, deleteArea, updateArea } from '../controllers/area.controller';
 import { createCriterion, deleteCriterion, updateCriterion } from '../controllers/criterion.controller';
-import { getStands, createStand, deleteStand, addMemberToStand, addMembersBatch, updateMember, deleteMember } from '../controllers/stand.controller';
+import { getStands, createStand, deleteStand, addMemberToStand, addMembersBatch, updateMember, deleteMember, updateStand } from '../controllers/stand.controller';
 import { createEvaluatorAndAssign, getEvaluators, deleteAssignment } from '../controllers/assignment.controller';
 import { getResults } from '../controllers/evaluation.controller';
 import { importSheets, exportResultsCSV, syncConfigFromGoogleSheets, syncResultsToGoogleSheets, createFeriaSpreadsheet } from '../controllers/sheets.controller';
@@ -28,6 +28,7 @@ router.delete('/criteria/:id', deleteCriterion);
 // --- Rutas de Stands y Miembros ---
 router.get('/stands', getStands);
 router.post('/stands', createStand);
+router.put('/stands/:id', updateStand);
 router.delete('/stands/:id', deleteStand);
 router.post('/stands/:id/members', addMemberToStand);
 router.post('/stands/:id/members/batch', addMembersBatch);
