@@ -188,6 +188,22 @@ export const importSheets = async (req: AuthRequest, res: Response): Promise<any
       }
     }
 
+    // Vincular el Google Sheet a la feria guardando los metadatos
+    const feria = await prisma.feria.findUnique({ where: { id: feriaId } });
+    if (feria) {
+      let currentMetadata = (feria.metadata && typeof feria.metadata === 'object') ? { ...feria.metadata as object } : {};
+      await prisma.feria.update({
+        where: { id: feriaId },
+        data: {
+          metadata: {
+            ...currentMetadata,
+            spreadsheetId,
+            spreadsheetUrl
+          }
+        }
+      });
+    }
+
     res.status(200).json({ message: 'Datos importados con éxito.' });
   } catch (error) {
     console.error(error);
