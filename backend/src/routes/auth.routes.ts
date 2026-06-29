@@ -13,15 +13,4 @@ router.post('/login', login);
 // Por ahora, la definimos para poder probarla
 router.post('/create-user', createCredentials);
 
-router.get('/debug-users', async (req, res) => {
-  try {
-    const { prisma } = require('../index');
-    const users = await prisma.user.findMany({ select: { id: true, username: true, role: true, feriaId: true } });
-    const ferias = await prisma.feria.findMany({ select: { id: true, name: true } });
-    res.json({ users, ferias });
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
 export default router;
